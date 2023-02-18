@@ -33,10 +33,12 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(LIBRARY_FOLDER)/portio.c -o $(OUTPUT_FOLDER)/portio.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(LIBRARY_FOLDER)/stdmem.c -o $(OUTPUT_FOLDER)/stdmem.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(LIBRARY_FOLDER)/framebuffer.c -o $(OUTPUT_FOLDER)/framebuffer.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(LIBRARY_FOLDER)/gdt.c -o $(OUTPUT_FOLDER)/gdt.o
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/portio
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/stdmem
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/framebuffer
+	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/gdt
 	@echo Linking object files and generate elf32...
 	@rm -f *.o
 
