@@ -12,11 +12,19 @@ extern struct GDTR _gdt_gdtr;
  * Struct defined exactly as Intel Manual Segment Descriptor definition (Figure 3-8 Segment Descriptor).
  * Manual can be downloaded at www.intel.com/content/www/us/en/architecture-and-technology/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.html/ 
  *
- * @param segment_low  16-bit lower-bit segment limit
- * @param base_low     16-bit lower-bit base address
- * @param base_mid     8-bit middle-bit base address
- * @param type_bit     4-bit contain type flags
- * @param non_system   1-bit contain system
+ * @param segment_low           16-bit lower-bit segment limit
+ * @param base_low              16-bit lower-bit base address
+ * @param base_mid              8-bit middle-bit base address
+ * @param type_bit              4-bit contain type flags
+ * @param non_system            1-bit contain system
+ * @param dpl                   2-bit contain descriptor privilege level
+ * @param present               1-bit contain segment present flag
+ * @param segment_limit_high    4-bit contain upper 4 bits of segment size
+ * @param avl                   1-bit contain available for use by system software flag
+ * @param l                     1-bit always 0
+ * @param db                    1-bit contain default operation size
+ * @param granularity           1-bit contain scaling factor flag
+ * @param base_high             8-bit upper-bit base address
  */
 struct SegmentDescriptor {
     // First 32-bit
@@ -24,10 +32,17 @@ struct SegmentDescriptor {
     uint16_t base_low;
 
     // Next 16-bit (Bit 32 to 47)
-    uint8_t             base_mid;
-    uint8_t type_bit   : 4;
-    uint8_t non_system : 1;
-    // TODO : Continue GDT definition
+    uint8_t base_mid;
+    uint8_t type_bit            : 4;
+    uint8_t non_system          : 1;
+    uint8_t dpl                 : 2;
+    uint8_t present             : 1;
+    uint8_t segment_limit_high  : 4;
+    uint8_t avl                 : 1;
+    uint8_t l                   : 1;
+    uint8_t db                  : 1;
+    uint8_t granularity         : 1;
+    uint8_t base_high;
 
 } __attribute__((packed));
 
