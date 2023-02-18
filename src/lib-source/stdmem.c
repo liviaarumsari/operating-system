@@ -13,7 +13,7 @@ void* memcpy(void* restrict dest, const void* restrict src, size_t n) {
     const uint8_t *srcbuf = (const uint8_t*) src;
     for (size_t i = 0; i < n; i++)
         dstbuf[i] = srcbuf[i];
-    return dstbuf;
+    return dstbuf;  
 }
 
 int memcmp(const void *s1, const void *s2, size_t n) {

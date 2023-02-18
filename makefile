@@ -5,6 +5,7 @@ CC            = gcc
 
 # Directory
 SOURCE_FOLDER = src
+LIBRARY_FOLDER = lib-source
 OUTPUT_FOLDER = bin
 ISO_NAME      = os2023
 
@@ -29,7 +30,13 @@ clean:
 kernel:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel_loader.s -o $(OUTPUT_FOLDER)/kernel_loader.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(LIBRARY_FOLDER)/portio.c -o $(OUTPUT_FOLDER)/portio.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(LIBRARY_FOLDER)/stdmem.c -o $(OUTPUT_FOLDER)/stdmem.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(LIBRARY_FOLDER)/framebuffer.c -o $(OUTPUT_FOLDER)/framebuffer.o
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
+	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/portio
+	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/stdmem
+	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/framebuffer
 	@echo Linking object files and generate elf32...
 	@rm -f *.o
 
