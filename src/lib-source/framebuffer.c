@@ -25,6 +25,11 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c) {
 }
 
 void framebuffer_clear(void) {
-    // Clear the entire memory buffer
+    // Set all character cells in the framebuffer to the empty character (0x00)
     memset(MEMORY_FRAMEBUFFER, 0x00, 80 * 25 * 2);
+
+    // Set character color to gray (0x07) and background color to black (0x00)
+    for (uint16_t i = 1; i < 80 * 25 * 2; i += 2) {
+        *((uint8_t*) MEMORY_FRAMEBUFFER + i) = 0x07;
+    }
 }
