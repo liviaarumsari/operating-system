@@ -28,8 +28,6 @@ build: iso
 clean:
 	rm -rf *.o *.iso $(OUTPUT_FOLDER)/kernel
 
-
-
 kernel:
 # Compile Assembly source file
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel_loader.s -o $(OUTPUT_FOLDER)/kernel_loader.o
@@ -40,6 +38,8 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(FRAMEBUFFER_FOLDER)/framebuffer.c -o $(OUTPUT_FOLDER)/framebuffer.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(GDT_FOLDER)/gdt.c -o $(OUTPUT_FOLDER)/gdt.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(INTERRUPT_FOLDER)/idt.c -o $(OUTPUT_FOLDER)/idt.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(INTERRUPT_FOLDER)/interrupt.c -o $(OUTPUT_FOLDER)/interrupt.o
 	
 # Link object files
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
@@ -47,6 +47,8 @@ kernel:
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/stdmem
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/framebuffer
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/gdt
+	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/idt
+	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/interrupt
 
 	@echo Linking object files and generate elf32...
 	@rm -f *.o

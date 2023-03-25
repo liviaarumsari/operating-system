@@ -14,14 +14,13 @@
 #define GDT_KERNEL_CODE_SEGMENT_SELECTOR 0x8
 #define GDT_KERNEL_DATA_SEGMENT_SELECTOR 0x10
 
-
 // Interrupt Handler / ISR stub for reducing code duplication, this array can be iterated in initialize_idt()
 extern void *isr_stub_table[ISR_STUB_TABLE_LIMIT];
 
 extern struct IDTR _idt_idtr;
 
 /**
- * IDTGate, IDT entry that point into interrupt handler
+ * IDTGate, IDT entry that points into interrupt handler.
  * Struct defined exactly in Intel x86 Vol 3a - Figure 6-2. IDT Gate Descriptors
  *
  * @param offset_low  Lower 16-bit offset
@@ -31,34 +30,47 @@ extern struct IDTR _idt_idtr;
  * @param _r_bit_2    Reserved for idtgate type, bit length: 3
  * @param gate_32     Is this gate size 32-bit? If not then its 16-bit gate
  * @param _r_bit_3    Reserved for idtgate type, bit length: 1
- * ...
+ * @param privilege   Descriptor privilege level
+ * @param valid_bit   Is this gate present?
+ * @param offset_high Upper 16-bit offset
  */
 struct IDTGate {
     // First 32-bit (Bit 0 to 31)
     uint16_t offset_low;
+    uint16_t segment;
 
-    // TODO : Implement
+    // Second 32-bit (Bit 32 to 63)
+    uint8_t _reserved : 5;
+    uint8_t _r_bit_1 : 3;
+    uint8_t _r_bit_2 : 3;
+    uint8_t gate_32 : 1;
+    uint8_t _r_bit_3 : 1;
+    uint8_t privilege : 2;
+    uint8_t valid_bit : 1;
+    uint16_t offset_high;
 } __attribute__((packed));
 
 /**
  * Interrupt Descriptor Table, containing lists of IDTGate.
  * One IDT already defined in idt.c
- *
- * ...
+ * 
+ * @param table Fixed-width array of IDTGate with size IDT_MAX_ENTRY_COUNT
  */
-// TODO : Implement
-// ...
+struct IDT {
+    struct IDTGate table[IDT_MAX_ENTRY_COUNT];
+} __attribute__((packed));
 
 /**
  * IDTR, carrying information where's the IDT located and size.
  * Global kernel variable defined at idt.c.
  *
- * ...
+ * @param size    Interrupt Descriptor Table size, use sizeof operator
+ * @param address IDT address, IDT should already be defined properly
  */
-// TODO : Implement
-// ...
-
-
+struct IDTR {
+    uint16_t size;
+    struct IDT *address;
+} __attribute__((packed));
 
 /**
  * Set IDTGate with proper interrupt handler values.
@@ -70,7 +82,6 @@ struct IDTGate {
  * @param privilege        Descriptor privilege level
  */
 void set_interrupt_gate(uint8_t int_vector, void *handler_address, uint16_t gdt_seg_selector, uint8_t privilege);
-
 
 /**
  * Set IDT with proper values and load with lidt

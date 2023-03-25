@@ -60,7 +60,7 @@ struct GlobalDescriptorTable {
  * Global kernel variable defined at memory.c.
  * 
  * @param size    Global Descriptor Table size, use sizeof operator
- * @param address GDT address, GDT should already defined properly
+ * @param address GDT address, GDT should already be defined properly
  */
 struct GDTR {
     uint16_t                     size;
