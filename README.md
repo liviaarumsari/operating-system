@@ -1,2 +1,2 @@
-# kit-OS-2023
-Kit untuk IF2230 - Sistem Operasi 2023
+# Operating System Course Project: sOS
+This repository contains the source code for a kernel as a completion for an Operating System Course Project.
