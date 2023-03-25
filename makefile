@@ -5,9 +5,12 @@ CC            = gcc
 
 # Directory
 SOURCE_FOLDER = src
-LIBRARY_FOLDER = lib-source
+LIBRARY_FOLDER = lib/lib-source
 OUTPUT_FOLDER = bin
 ISO_NAME      = os2023
+FRAMEBUFFER_FOLDER = framebuffer
+GDT_FOLDER = GDT
+INTERRUPT_FOLDER = interrupt
 
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror
@@ -32,11 +35,11 @@ kernel:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel_loader.s -o $(OUTPUT_FOLDER)/kernel_loader.o
 
 # Compile C files	
+	@$(CC) $(CFLAGS) $(LIBRARY_FOLDER)/portio.c -o $(OUTPUT_FOLDER)/portio.o
+	@$(CC) $(CFLAGS) $(LIBRARY_FOLDER)/stdmem.c -o $(OUTPUT_FOLDER)/stdmem.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
-	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(LIBRARY_FOLDER)/portio.c -o $(OUTPUT_FOLDER)/portio.o
-	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(LIBRARY_FOLDER)/stdmem.c -o $(OUTPUT_FOLDER)/stdmem.o
-	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(LIBRARY_FOLDER)/framebuffer.c -o $(OUTPUT_FOLDER)/framebuffer.o
-	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(LIBRARY_FOLDER)/gdt.c -o $(OUTPUT_FOLDER)/gdt.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(FRAMEBUFFER_FOLDER)/framebuffer.c -o $(OUTPUT_FOLDER)/framebuffer.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(GDT_FOLDER)/gdt.c -o $(OUTPUT_FOLDER)/gdt.o
 	
 # Link object files
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel

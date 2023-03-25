@@ -1,7 +1,7 @@
-#include "../lib-header/framebuffer.h"
-#include "../lib-header/stdtype.h"
-#include "../lib-header/stdmem.h"
-#include "../lib-header/portio.h"
+#include "../../lib/lib-header/stdtype.h"
+#include "../../lib/lib-header/stdmem.h"
+#include "../../lib/lib-header/portio.h"
+#include "../../include/framebuffer.h"
 
 void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg) {
     // Determine buffer index

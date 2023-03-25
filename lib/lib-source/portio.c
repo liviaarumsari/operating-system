@@ -1,5 +1,5 @@
-#include "lib-header/stdtype.h"
-#include "lib-header/portio.h"
+#include "../lib-header/stdtype.h"
+#include "../lib-header/portio.h"
 
 /** x86 inb/outb:
  * @param dx target port 
