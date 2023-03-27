@@ -42,4 +42,6 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c);
  */
 void framebuffer_clear(void);
 
+void framebuffer_clear_char(uint8_t row, uint8_t col);
+
 #endif
