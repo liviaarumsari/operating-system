@@ -6,6 +6,7 @@
 #include "../include/kernel_loader.h"
 #include "../include/idt.h"
 #include "../include/interrupt.h"
+#include "../include/keyboard.h"
 
 void kernel_setup(void) {
     enter_protected_mode(&_gdt_gdtr);
@@ -14,5 +15,7 @@ void kernel_setup(void) {
     framebuffer_clear();
     framebuffer_set_cursor(0, 0);
     __asm__("int $0x4");
-    while (TRUE);
+    while (TRUE) {
+        keyboard_state_activate();
+    }
 }
