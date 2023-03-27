@@ -11,6 +11,7 @@ ISO_NAME      = os2023
 FRAMEBUFFER_FOLDER = framebuffer
 GDT_FOLDER = GDT
 INTERRUPT_FOLDER = interrupt
+DISK_NAME = storage
 
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror
@@ -22,11 +23,17 @@ LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
 
 run: all
-	@qemu-system-i386 -s -S -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
+	@qemu-system-i386 -s -S -drive file=$(OUTPUT_FOLDER)/storage.bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
+
 all: build
+
 build: iso
+
 clean:
-	rm -rf *.o *.iso $(OUTPUT_FOLDER)/kernel
+	rm -rf $(OUTPUT_FOLDER)/*.o $(OUTPUT_FOLDER)/*.iso $(OUTPUT_FOLDER)/*.bin $(OUTPUT_FOLDER)/kernel
+
+disk:
+	@qemu-img create -f raw $(OUTPUT_FOLDER)/$(DISK_NAME).bin 4M
 
 kernel:
 # Compile Assembly source file
