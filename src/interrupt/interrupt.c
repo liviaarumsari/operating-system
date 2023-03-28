@@ -1,5 +1,6 @@
 #include "../../include/interrupt.h"
 #include "../../lib/lib-header/portio.h"
+#include "../../include/framebuffer.h"
 
 void io_wait(void) {
     out(0x80, 0);
@@ -47,7 +48,20 @@ void main_interrupt_handler(
     uint32_t int_number,
     __attribute__((unused)) struct InterruptStack info
 ) {
+    int temp;
+    int ctr = 0;
     switch (int_number) {
-
+        case 0x4:
+            framebuffer_write(0, 0, 'A', 0x07, 0x00);
+            break;
+        default:
+            temp = int_number;
+            while (temp > 0)
+            {
+                framebuffer_write(3, ctr, (temp % 10) + '0', 0x07, 0x00);
+                temp /= 10;
+                ctr++;
+            }
+            break;
     }
 }
