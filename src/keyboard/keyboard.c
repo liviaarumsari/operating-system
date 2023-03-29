@@ -105,10 +105,12 @@ void keyboard_isr(void) {
                 // Handle printable character
                 row = BUFFER_COUNT / 80;
                 col = BUFFER_COUNT % 80;
-                framebuffer_write(row, col, mapped_char, 0xF, 0);
-                BUFFER_COUNT++;
-                row = BUFFER_COUNT / 80;
-                col = BUFFER_COUNT % 80;
+                if (!(row == 24 && col == 79)) {
+                    framebuffer_write(row, col, mapped_char, 0xF, 0);
+                    BUFFER_COUNT++;
+                    row = BUFFER_COUNT / 80;
+                    col = BUFFER_COUNT % 80;
+                }
                 framebuffer_set_cursor(row, col);
             }
         }
