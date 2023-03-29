@@ -35,5 +35,5 @@ void framebuffer_clear(void) {
 }
 
 void framebuffer_clear_char(uint8_t row, uint8_t col) {
-    framebuffer_write(row, col, ' ', 0x00, 0x00);
+    memset(MEMORY_FRAMEBUFFER + (row * 80 + col) * 2, 0x00, 1);
 }
