@@ -82,6 +82,17 @@ void keyboard_isr(void) {
                     BUFFER_COUNT--;
                     row = BUFFER_COUNT / 80;
                     col = BUFFER_COUNT % 80;
+                    while (*(MEMORY_FRAMEBUFFER + (row * 80 + col) * 2) == 0x00) {
+                        if (col > 0) {
+                            BUFFER_COUNT--;
+                            col--;
+                        }
+                        else {
+                            row--;
+                            col = 79;
+                            BUFFER_COUNT--;
+                        }
+                    }
                     framebuffer_clear_char(row, col);
                     framebuffer_set_cursor(row, col);
                 } else {
