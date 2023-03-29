@@ -1,8 +1,5 @@
 #include "../../include/idt.h"
 
-// Declare empty ISR stub table
-void *isr_stub_table[ISR_STUB_TABLE_LIMIT];
-
 // Declare empty IDT
 struct IDT interrupt_descriptor_table;
 
