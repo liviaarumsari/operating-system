@@ -60,28 +60,40 @@ void keyboard_isr(void) {
     else {
         uint8_t  scancode    = in(KEYBOARD_DATA_PORT);
         char     mapped_char = keyboard_scancode_1_to_ascii_map[scancode];
+        uint8_t row;
+        uint8_t col;
         if (mapped_char == '\n') {
+            uint32_t temp = BUFFER_COUNT + (80 - (BUFFER_COUNT % 80));
+            row = temp / 80;
+            col = temp % 80;
+            if (row <= 24) {
+                BUFFER_COUNT = temp;
+                framebuffer_set_cursor(row, col);
+            }
             // Stop processing scancodes when enter key is pressed
             keyboard_state.keyboard_input_on = 0;
         } else {
             // Print character to screen and update cursor position
-            if (mapped_char == '\b' && BUFFER_COUNT > 0) {
-                // Handle backspace character
-                keyboard_state.buffer_index--;
-                keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = 0;
-                BUFFER_COUNT--;
-                uint8_t row = BUFFER_COUNT / 80;
-                uint8_t col = BUFFER_COUNT % 80;
-                framebuffer_clear_char(row, col);
-                framebuffer_set_cursor(row, col);
-
+            if (mapped_char == '\b') {
+                if (BUFFER_COUNT > 0) {    
+                    // Remove character from buffer
+                    keyboard_state.buffer_index--;
+                    keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = 0;
+                    BUFFER_COUNT--;
+                    row = BUFFER_COUNT / 80;
+                    col = BUFFER_COUNT % 80;
+                    framebuffer_clear_char(row, col);
+                    framebuffer_set_cursor(row, col);
+                } else {
+                    framebuffer_set_cursor(0, 0);
+                }
             } else if (mapped_char != 0) {
                 // Add mapped character to buffer
                 keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = mapped_char;
                 keyboard_state.buffer_index++;
                 // Handle printable character
-                uint8_t row = BUFFER_COUNT / 80;
-                uint8_t col = BUFFER_COUNT % 80;
+                row = BUFFER_COUNT / 80;
+                col = BUFFER_COUNT % 80;
                 framebuffer_write(row, col, mapped_char, 0xF, 0);
                 BUFFER_COUNT++;
                 row = BUFFER_COUNT / 80;
