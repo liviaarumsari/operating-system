@@ -11,6 +11,7 @@ ISO_NAME      = os2023
 FRAMEBUFFER_FOLDER = framebuffer
 GDT_FOLDER = GDT
 INTERRUPT_FOLDER = interrupt
+KEYBOARD_FOLDER = keyboard
 
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror
@@ -41,12 +42,13 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(GDT_FOLDER)/gdt.c -o $(OUTPUT_FOLDER)/gdt.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(INTERRUPT_FOLDER)/idt.c -o $(OUTPUT_FOLDER)/idt.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(INTERRUPT_FOLDER)/interrupt.c -o $(OUTPUT_FOLDER)/interrupt.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(KEYBOARD_FOLDER)/keyboard.c -o $(OUTPUT_FOLDER)/keyboard.o
 	
 # Link object files
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
 
 	@echo Linking object files and generate elf32...
-	@rm -f *.o
+	@rm -f ${OUTPUT_FOLDER}/*.o
 
 iso: kernel
 	@mkdir -p $(OUTPUT_FOLDER)/iso/boot/grub

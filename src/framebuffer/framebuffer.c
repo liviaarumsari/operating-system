@@ -33,3 +33,7 @@ void framebuffer_clear(void) {
         *((uint8_t*) MEMORY_FRAMEBUFFER + i) = 0x07;
     }
 }
+
+void framebuffer_clear_char(uint8_t row, uint8_t col) {
+    memset(MEMORY_FRAMEBUFFER + (row * 80 + col) * 2, 0x00, 1);
+}
