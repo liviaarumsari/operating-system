@@ -94,7 +94,7 @@ int8_t read_directory(struct FAT32DriverRequest request) {
     uint32_t cluster_number = (dir_entry.cluster_high << 16) | dir_entry.cluster_low; 
 
     if (cluster_number) {
-        read_clusters(&request.buf, cluster_number, 1);  // Do the reading
+        read_clusters(request.buf, cluster_number, 1);  // Do the reading
         return 0;
     }
 
@@ -351,10 +351,11 @@ int8_t add_entry(struct FAT32DriverRequest request, uint32_t cluster_number) {
     }
 
     fat32_driver_state.dir_table_buf.table[entry_i].user_attribute = UATTR_NOT_EMPTY;
-    fat32_driver_state.dir_table_buf.table[entry_i].attribute = ATTR_SUBDIRECTORY;
+    if (request.buffer_size == 0)
+        fat32_driver_state.dir_table_buf.table[entry_i].attribute = ATTR_SUBDIRECTORY;
     fat32_driver_state.dir_table_buf.table[entry_i].cluster_high = (cluster_number >> 16) & 0xFFFF;
     fat32_driver_state.dir_table_buf.table[entry_i].cluster_low = cluster_number & 0xFFFF;
-    fat32_driver_state.dir_table_buf.table[entry_i].filesize = 0;
+    fat32_driver_state.dir_table_buf.table[entry_i].filesize = request.buffer_size;
 
     write_clusters(&fat32_driver_state.dir_table_buf.table,
                    request.parent_cluster_number,
