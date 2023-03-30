@@ -35,8 +35,6 @@
 #define ATTR_SUBDIRECTORY     0b00010000
 #define UATTR_NOT_EMPTY       0b10101010
 
-
-
 // Boot sector signature for this file system "FAT32 - IF2230 edition"
 extern const uint8_t fs_signature[BLOCK_SIZE];
 
@@ -120,6 +118,7 @@ struct FAT32DriverState {
     struct FAT32FileAllocationTable fat_table;
     struct FAT32DirectoryTable      dir_table_buf;
     struct ClusterBuffer            cluster_buf;
+    uint32_t linser_parent_number;
 } __attribute__((packed));
 
 /**
@@ -245,5 +244,45 @@ int8_t write(struct FAT32DriverRequest request);
  * @return Error code: 0 success - 1 not found - 2 folder is not empty - -1 unknown
  */
 int8_t delete(struct FAT32DriverRequest request);
+
+
+
+
+
+/* -- CRUD Helper Functions -- */
+
+/**
+ * Linear search on a directory table based on name and extension.
+ * 
+ * @param name Entry name of a directory entry.
+ * @param ext File extension of a directory entry.
+ * @param parent_dir_cluster Cluster number of parent directory
+ * @return FAT32DirectoryEntry The directory entry found. 
+ * @return 0 if directory is not found.
+ */
+struct FAT32DirectoryEntry *dir_table_linear_search(char* name, char* ext, uint32_t parent_dir_cluster);
+
+/**
+ * Determines if a cluster is a directory or not
+ * 
+ * @param cluster_number cluster number of the cluster
+ * @return true if the cluster is a directory,
+ * @return false otherwise
+ */
+bool is_cluster_directory(uint32_t cluster_number);
+
+/**
+ * Add a directory entry to a directory table
+ *
+ * @param request
+ * @param cluster_number cluster number of the cluster that is want to be added to the directory table
+ * @return 0 if adding entry is successful,
+ * @return -1 otherwise
+ */
+int8_t add_entry(struct FAT32DriverRequest request, uint32_t cluster_number);
+
+uint32_t extend_dir_table(uint32_t dir_cluster_number);
+
+void clear_cluster(uint32_t cluster_number);
 
 #endif
