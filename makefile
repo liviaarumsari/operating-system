@@ -12,6 +12,7 @@ FRAMEBUFFER_FOLDER = framebuffer
 GDT_FOLDER = GDT
 INTERRUPT_FOLDER = interrupt
 DISK_NAME = storage
+FILESYSTEM_FOLDER = filesystem
 
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror
@@ -38,6 +39,7 @@ disk:
 kernel:
 # Compile Assembly source file
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel_loader.s -o $(OUTPUT_FOLDER)/kernel_loader.o
+	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/$(INTERRUPT_FOLDER)/intsetup.s -o $(OUTPUT_FOLDER)/intsetup.o
 
 # Compile C files	
 	@$(CC) $(CFLAGS) $(LIBRARY_FOLDER)/portio.c -o $(OUTPUT_FOLDER)/portio.o
@@ -47,18 +49,14 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(GDT_FOLDER)/gdt.c -o $(OUTPUT_FOLDER)/gdt.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(INTERRUPT_FOLDER)/idt.c -o $(OUTPUT_FOLDER)/idt.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(INTERRUPT_FOLDER)/interrupt.c -o $(OUTPUT_FOLDER)/interrupt.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(FILESYSTEM_FOLDER)/disk.c -o $(OUTPUT_FOLDER)/disk.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(FILESYSTEM_FOLDER)/fat32.c -o $(OUTPUT_FOLDER)/fat32.o
 	
 # Link object files
-	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
-	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/portio
-	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/stdmem
-	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/framebuffer
-	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/gdt
-	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/idt
-	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/interrupt
+	@$(LIN) $(LFLAGS) $(OUTPUT_FOLDER)/*.o -o $(OUTPUT_FOLDER)/kernel
 
 	@echo Linking object files and generate elf32...
-	@rm -f *.o
+	@rm -f $(OUTPUT_FOLDER)/*.o
 
 iso: kernel
 	@mkdir -p $(OUTPUT_FOLDER)/iso/boot/grub

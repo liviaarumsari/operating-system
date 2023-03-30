@@ -246,4 +246,10 @@ int8_t write(struct FAT32DriverRequest request);
  */
 int8_t delete(struct FAT32DriverRequest request);
 
+bool is_cluster_directory(uint32_t cluster_number);
+
+int8_t add_entry(struct FAT32DriverRequest request, uint32_t cluster_number);
+
+int32_t dir_table_linear_search(char* name, char* ext);
+
 #endif
