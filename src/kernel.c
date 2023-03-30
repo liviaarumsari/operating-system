@@ -51,6 +51,17 @@ void kernel_setup(void) {
 
         write(request);
     }
+
+    request.name[0] = 127 % 26 + 'a';
+    request.name[1] = 127 / 26 + 'a';
+    request.name[2] = '\0';
+    request.name[3] = '\0';
+    request.name[4] = '\0';
+    request.name[5] = '\0';
+    request.name[6] = '\0';
+    request.name[7] = '\0';
+
+    delete(request);
     
 
     // write(request);  // Create folder "ikanaide"
