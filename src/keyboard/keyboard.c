@@ -62,7 +62,9 @@ void keyboard_isr(void) {
         char     mapped_char = keyboard_scancode_1_to_ascii_map[scancode];
         uint8_t row;
         uint8_t col;
+        // Handle enter character
         if (mapped_char == '\n') {
+            // Set cursor
             uint32_t temp = BUFFER_COUNT + (80 - (BUFFER_COUNT % 80));
             row = temp / 80;
             col = temp % 80;
@@ -72,16 +74,16 @@ void keyboard_isr(void) {
             }
             // Stop processing scancodes when enter key is pressed
             keyboard_state.keyboard_input_on = 0;
-        } else {
-            // Print character to screen and update cursor position
-            if (mapped_char == '\b') {
-                if (BUFFER_COUNT > 0) {    
+        // Handle backspace character
+        } else if (mapped_char == '\b') {
+            if (BUFFER_COUNT > 0) {    
                     // Remove character from buffer
                     keyboard_state.buffer_index--;
                     keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = 0;
                     BUFFER_COUNT--;
                     row = BUFFER_COUNT / 80;
                     col = BUFFER_COUNT % 80;
+                    // Skip over empty character
                     while (*(MEMORY_FRAMEBUFFER + (row * 80 + col) * 2) == 0x00) {
                         if (col > 0) {
                             BUFFER_COUNT--;
@@ -95,24 +97,24 @@ void keyboard_isr(void) {
                     }
                     framebuffer_clear_char(row, col);
                     framebuffer_set_cursor(row, col);
-                } else {
-                    framebuffer_set_cursor(0, 0);
-                }
-            } else if (mapped_char != 0) {
-                // Add mapped character to buffer
-                keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = mapped_char;
-                keyboard_state.buffer_index++;
-                // Handle printable character
+            } else {
+                framebuffer_set_cursor(0, 0);
+            }
+        // Handle printable character
+        } else if (mapped_char != 0) {
+            // Add mapped character to buffer
+            keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = mapped_char;
+            keyboard_state.buffer_index++;
+            row = BUFFER_COUNT / 80;
+            col = BUFFER_COUNT % 80;
+            // Boundary for keyboard write
+            if (!(row == 24 && col == 79)) {
+                framebuffer_write(row, col, mapped_char, 0xF, 0);
+                BUFFER_COUNT++;
                 row = BUFFER_COUNT / 80;
                 col = BUFFER_COUNT % 80;
-                if (!(row == 24 && col == 79)) {
-                    framebuffer_write(row, col, mapped_char, 0xF, 0);
-                    BUFFER_COUNT++;
-                    row = BUFFER_COUNT / 80;
-                    col = BUFFER_COUNT % 80;
-                }
-                framebuffer_set_cursor(row, col);
             }
+            framebuffer_set_cursor(row, col);
         }
     }
     pic_ack(IRQ_KEYBOARD);
