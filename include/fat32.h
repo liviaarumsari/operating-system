@@ -35,8 +35,6 @@
 #define ATTR_SUBDIRECTORY     0b00010000
 #define UATTR_NOT_EMPTY       0b10101010
 
-
-
 // Boot sector signature for this file system "FAT32 - IF2230 edition"
 extern const uint8_t fs_signature[BLOCK_SIZE];
 
@@ -257,9 +255,11 @@ int8_t delete(struct FAT32DriverRequest request);
  * 
  * @param name Entry name of a directory entry.
  * @param ext File extension of a directory entry.
- * @return int8_t The index of the directory entry found. Returns -1 if it is not found.
+ * @param parent_dir_cluster Cluster number of parent directory
+ * @return FAT32DirectoryEntry The directory entry found. 
+ * @return 0 if directory is not found.
  */
-int32_t dir_table_linear_search(char* name, char* ext);
+struct FAT32DirectoryEntry *dir_table_linear_search(char* name, char* ext, uint32_t parent_dir_cluster);
 
 /**
  * Determines if a cluster is a directory or not
@@ -279,5 +279,9 @@ bool is_cluster_directory(uint32_t cluster_number);
  * @return -1 otherwise
  */
 int8_t add_entry(struct FAT32DriverRequest request, uint32_t cluster_number);
+
+int8_t extend_dir_table(uint32_t dir_cluster_number);
+
+void clear_cluster(uint32_t cluster_number);
 
 #endif
