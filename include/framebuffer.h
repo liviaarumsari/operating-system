@@ -42,4 +42,12 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c);
  */
 void framebuffer_clear(void);
 
+/**
+ * Set character in row, col in framebuffer as empty character
+ * 
+ * @param row row
+ * @param col column
+ */
+void framebuffer_clear_char(uint8_t row, uint8_t col);
+
 #endif

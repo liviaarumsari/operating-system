@@ -1,14 +1,11 @@
 #include "../../include/idt.h"
 
-// Declare empty ISR stub table
-void *isr_stub_table[ISR_STUB_TABLE_LIMIT];
-
 // Declare empty IDT
 struct IDT interrupt_descriptor_table;
 
 // Declare empty IDTR
 struct IDTR _idt_idtr = {
-    .size = sizeof(interrupt_descriptor_table),
+    .size = sizeof(interrupt_descriptor_table) - 1,
     .address = &interrupt_descriptor_table
 };
 

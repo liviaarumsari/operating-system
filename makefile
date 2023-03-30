@@ -13,6 +13,7 @@ GDT_FOLDER = GDT
 INTERRUPT_FOLDER = interrupt
 DISK_NAME = storage
 FILESYSTEM_FOLDER = filesystem
+KEYBOARD_FOLDER = keyboard
 
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror
@@ -51,12 +52,13 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(INTERRUPT_FOLDER)/interrupt.c -o $(OUTPUT_FOLDER)/interrupt.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(FILESYSTEM_FOLDER)/disk.c -o $(OUTPUT_FOLDER)/disk.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(FILESYSTEM_FOLDER)/fat32.c -o $(OUTPUT_FOLDER)/fat32.o
+  @$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(KEYBOARD_FOLDER)/keyboard.c -o $(OUTPUT_FOLDER)/keyboard.o
 	
 # Link object files
-	@$(LIN) $(LFLAGS) $(OUTPUT_FOLDER)/*.o -o $(OUTPUT_FOLDER)/kernel
+	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
 
 	@echo Linking object files and generate elf32...
-	@rm -f $(OUTPUT_FOLDER)/*.o
+	@rm -f ${OUTPUT_FOLDER}/*.o
 
 iso: kernel
 	@mkdir -p $(OUTPUT_FOLDER)/iso/boot/grub

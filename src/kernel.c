@@ -7,10 +7,12 @@
 #include "../include/idt.h"
 #include "../include/interrupt.h"
 #include "../include/fat32.h"
+#include "../include/keyboard.h"
 
 void kernel_setup(void) {
     enter_protected_mode(&_gdt_gdtr);
     pic_remap();
+    activate_keyboard_interrupt();
     initialize_idt();
     framebuffer_clear();
     framebuffer_set_cursor(0, 0);
