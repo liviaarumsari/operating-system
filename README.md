@@ -45,7 +45,11 @@ sudo apt install gcc nasm make qemu-system-x86 genisoimage
 You can directly use VSCode to run and debug or follow these steps
 
 1. Make sure you are in the root folder <br>
-2. Run the application using this command
+2. If it's your first time running the application or you want to make a new storage for file system, run this command
+```sh 
+make disk
+```
+3. Run the application using this command
 ```sh 
 make run
 ```
