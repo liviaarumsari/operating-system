@@ -246,4 +246,38 @@ int8_t write(struct FAT32DriverRequest request);
  */
 int8_t delete(struct FAT32DriverRequest request);
 
+
+
+
+
+/* -- CRUD Helper Functions -- */
+
+/**
+ * Linear search on a directory table based on name and extension.
+ * 
+ * @param name Entry name of a directory entry.
+ * @param ext File extension of a directory entry.
+ * @return int8_t The index of the directory entry found. Returns -1 if it is not found.
+ */
+int32_t dir_table_linear_search(char* name, char* ext);
+
+/**
+ * Determines if a cluster is a directory or not
+ * 
+ * @param cluster_number cluster number of the cluster
+ * @return true if the cluster is a directory,
+ * @return false otherwise
+ */
+bool is_cluster_directory(uint32_t cluster_number);
+
+/**
+ * Add a directory entry to a directory table
+ *
+ * @param request
+ * @param cluster_number cluster number of the cluster that is want to be added to the directory table
+ * @return 0 if adding entry is successful,
+ * @return -1 otherwise
+ */
+int8_t add_entry(struct FAT32DriverRequest request, uint32_t cluster_number);
+
 #endif
