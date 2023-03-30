@@ -205,6 +205,9 @@ int8_t write(struct FAT32DriverRequest request) {
                 add_entry(request, empty_cluster_number);
             }
 
+            while (fat32_driver_state.fat_table.cluster_map[empty_cluster_number] != FAT32_FAT_EMPTY_ENTRY)
+                empty_cluster_number++;
+
             fat32_driver_state.fat_table.cluster_map[empty_cluster_number] = FAT32_FAT_END_OF_FILE;
             write_clusters(buf_p, empty_cluster_number, 1);
 
@@ -339,13 +342,13 @@ int8_t add_entry(struct FAT32DriverRequest request, uint32_t cluster_number) {
     uint32_t entry_i = 0;
 
     while (entry_i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry) &&
-           fat32_driver_state.dir_table_buf.table[entry_i].user_attribute == UATTR_NOT_EMPTY)
+           fat32_driver_state.dir_table_buf.table[entry_i].user_attribute == UATTR_NOT_EMPTY) {
         entry_i++;
-
-    if (entry_i == CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)) {
-        uint32_t extended_cluster_number = extend_dir_table(request.parent_cluster_number);
-        entry_i = 0;
-        read_clusters(&fat32_driver_state.dir_table_buf.table, extended_cluster_number, 1);
+        if (entry_i == CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)) {
+            request.parent_cluster_number = extend_dir_table(request.parent_cluster_number);
+            entry_i = 0;
+            read_clusters(&fat32_driver_state.dir_table_buf.table, request.parent_cluster_number, 1);
+        }
     }
 
     for (size_t i = 0; i < 8; i++) {
@@ -364,7 +367,10 @@ int8_t add_entry(struct FAT32DriverRequest request, uint32_t cluster_number) {
     return 0;
 }
 
-int8_t extend_dir_table(uint32_t dir_cluster_number) {
+uint32_t extend_dir_table(uint32_t dir_cluster_number) {
+    if (fat32_driver_state.fat_table.cluster_map[dir_cluster_number] != FAT32_FAT_END_OF_FILE)
+        return fat32_driver_state.fat_table.cluster_map[dir_cluster_number];
+
     uint32_t empty_cluster_number = 3;
 
     while (fat32_driver_state.fat_table.cluster_map[empty_cluster_number] !=

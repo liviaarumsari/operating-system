@@ -280,7 +280,7 @@ bool is_cluster_directory(uint32_t cluster_number);
  */
 int8_t add_entry(struct FAT32DriverRequest request, uint32_t cluster_number);
 
-int8_t extend_dir_table(uint32_t dir_cluster_number);
+uint32_t extend_dir_table(uint32_t dir_cluster_number);
 
 void clear_cluster(uint32_t cluster_number);
 
