@@ -50,7 +50,7 @@ void kernel_setup(void) {
         request.name[5] = '\0';
         request.name[6] = '\0';
         request.name[7] = '\0';
-
+    
         write(request);
     }
 

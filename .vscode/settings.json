@@ -2,6 +2,8 @@
     "debug.onTaskErrors": "debugAnyway",
     "files.associations": {
         "*.pl": "prolog",
-        "idt.h": "c"
+        "idt.h": "c",
+        "framebuffer.h": "c",
+        "stdtype.h": "c"
     },
 }

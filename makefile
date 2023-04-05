@@ -14,6 +14,7 @@ INTERRUPT_FOLDER = interrupt
 DISK_NAME = storage
 FILESYSTEM_FOLDER = filesystem
 KEYBOARD_FOLDER = keyboard
+PAGING_FOLDER = paging
 
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror
@@ -53,6 +54,7 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(FILESYSTEM_FOLDER)/disk.c -o $(OUTPUT_FOLDER)/disk.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(FILESYSTEM_FOLDER)/fat32.c -o $(OUTPUT_FOLDER)/fat32.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(KEYBOARD_FOLDER)/keyboard.c -o $(OUTPUT_FOLDER)/keyboard.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(PAGING_FOLDER)/paging.c -o $(OUTPUT_FOLDER)/paging.o
 	
 # Link object files
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
