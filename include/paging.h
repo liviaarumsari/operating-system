@@ -13,23 +13,23 @@ extern struct PageDirectory _paging_kernel_page_directory;
  * Page Directory Entry Flag, only first 8 bit
  *
  * @param present_bit       Indicate whether this entry is exist or not
- * @param read_write        Whether the page is writable or read-only
+ * @param write_bit         Whether the page is writable or read-only
  * @param user_supervisor   Whether the page is accessible by user or supervisor
  * @param write_through     Whether to enable write-through caching for this page
  * @param cache_disabled    Whether to disable caching for this page
  * @param accessed          Whether the page has been accessed
  * @param dirty             Whether the page has been written to
- * @param page_size         Whether the page table entry is a page directory entry for a 4-MByte page
+ * @param use_pagesize_4_mb Whether the page table entry is a page directory entry for a 4-MByte page
  */
 struct PageDirectoryEntryFlag {
     uint8_t present_bit     : 1;
-    uint8_t read_write      : 1;
+    uint8_t write_bit       : 1;
     uint8_t user_supervisor : 1;
     uint8_t write_through   : 1;
     uint8_t cache_disabled  : 1;
     uint8_t accessed        : 1;
     uint8_t dirty           : 1;
-    uint8_t page_size       : 1;
+    uint8_t use_pagesize_4_mb : 1;
 };
 
 /**
@@ -40,18 +40,21 @@ struct PageDirectoryEntryFlag {
  * @param global_page     Is this page translation global (also cannot be flushed)
  * @param ignored         Ignored
  * @param pat             Whether the Page Attribute Table (PAT) feature is supported.
- * @param page_offset     Bits (M–1):32 of physical address of the 4-MByte page referenced by this entry
+ * @param higher_address  Bits (M–1):32 of physical address of the 4-MByte page referenced by this entry
  * @param reserved        Reserved bits
- * @param page_base_addr  Bits 31:22 of physical address of the 4-MByte page referenced by this entry
+ * @param lower_address   Bits 31:22 of physical address of the 4-MByte page referenced by this entry
+ * Note:
+ * - Assume "Bits 39:32 of address" (higher_address) is 8-bit and Reserved is 1
+ * - "Bits 31:22 of address" is called lower_address in kit
  */
 struct PageDirectoryEntry {
     struct PageDirectoryEntryFlag flag;
     uint16_t global_page    : 1;
     uint16_t ignored        : 3;
     uint16_t pat            : 1;
-    uint16_t page_offset    : 4;
-    uint16_t reserved       : 5;
-    uint16_t page_base_addr : 10;
+    uint16_t higher_address : 8;
+    uint16_t reserved       : 1;
+    uint16_t lower_address  : 10;
 } __attribute__((packed));
 
 /**
