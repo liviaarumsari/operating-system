@@ -4,6 +4,7 @@
         "*.pl": "prolog",
         "idt.h": "c",
         "framebuffer.h": "c",
-        "stdtype.h": "c"
+        "stdtype.h": "c",
+        "stdlib.h": "c"
     },
 }

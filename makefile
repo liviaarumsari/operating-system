@@ -15,6 +15,7 @@ DISK_NAME = storage
 FILESYSTEM_FOLDER = filesystem
 KEYBOARD_FOLDER = keyboard
 PAGING_FOLDER = paging
+INSERTER_FOLDER = inserter
 
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror
@@ -33,10 +34,30 @@ all: build
 build: iso
 
 clean:
-	rm -rf $(OUTPUT_FOLDER)/*.o $(OUTPUT_FOLDER)/*.iso $(OUTPUT_FOLDER)/*.bin $(OUTPUT_FOLDER)/kernel
+	rm -rf $(OUTPUT_FOLDER)/*.o $(OUTPUT_FOLDER)/*.iso $(OUTPUT_FOLDER)/*.bin $(OUTPUT_FOLDER)/kernel $(OUTPUT_FOLDER)/inserter $(OUTPUT_FOLDER)/shell
 
 disk:
 	@qemu-img create -f raw $(OUTPUT_FOLDER)/$(DISK_NAME).bin 4M
+
+inserter:
+	@$(CC) -Wno-builtin-declaration-mismatch -g \
+		$(LIBRARY_FOLDER)/stdmem.c $(SOURCE_FOLDER)/$(FILESYSTEM_FOLDER)/fat32.c \
+		$(SOURCE_FOLDER)/$(INSERTER_FOLDER)/external-inserter.c \
+		-o $(OUTPUT_FOLDER)/inserter
+
+# User mode
+user-shell:
+	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/user-entry.s -o user-entry.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/user-shell.c -o user-shell.o
+	@$(LIN) -T $(SOURCE_FOLDER)/user-linker.ld -melf_i386 \
+		user-entry.o user-shell.o -o $(OUTPUT_FOLDER)/shell
+	@echo Linking object shell object files and generate flat binary...
+	@size --target=binary bin/shell
+	@rm -f *.o
+
+insert-shell: inserter user-shell
+	@echo Inserting shell into root directory... 
+	@cd $(OUTPUT_FOLDER); ./inserter shell 2 $(DISK_NAME).bin
 
 kernel:
 # Compile Assembly source file
