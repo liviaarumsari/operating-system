@@ -34,7 +34,7 @@ int8_t allocate_single_user_page_frame(void *virtual_addr) {
     uint32_t last_physical_addr = (uint32_t) page_driver_state.last_available_physical_addr;
 
     // If physical_addr is out of range (128 MiB or more), return failure
-    if (last_physical_addr >= 0x8000000) {
+    if (last_physical_addr >= 0x07FE0000) {
         return -1;
     }
 
