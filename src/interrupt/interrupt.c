@@ -3,6 +3,8 @@
 #include "../../lib/lib-header/portio.h"
 #include "../../include/framebuffer.h"
 
+struct TSSEntry _interrupt_tss_entry;
+
 void io_wait(void) {
     out(0x80, 0);
 }
@@ -61,3 +63,10 @@ void activate_keyboard_interrupt(void) {
     out(PIC2_DATA, PIC_DISABLE_ALL_MASK);
 }
 
+void set_tss_kernel_current_stack(void) {
+    uint32_t stack_ptr;
+    // Reading base stack frame instead esp
+    __asm__ volatile ("mov %%ebp, %0": "=r"(stack_ptr) : /* <Empty> */);
+    // Add 8 because 4 for ret address and other 4 is for stack_ptr variable
+    _interrupt_tss_entry.esp0 = stack_ptr + 8; 
+}
