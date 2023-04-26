@@ -30,7 +30,7 @@ static struct KeyboardDriverState keyboard_state = {
     .keyboard_buffer = {[0 ... KEYBOARD_BUFFER_SIZE -1] = 0 }
 };
 
-static uint32_t BUFFER_COUNT = 0;
+uint32_t BUFFER_COUNT = 0;
 
 void keyboard_state_activate(void) {
     keyboard_state.keyboard_input_on = 1;
@@ -64,6 +64,7 @@ void keyboard_isr(void) {
         uint8_t col;
         // Handle enter character
         if (mapped_char == '\n') {
+            keyboard_state.keyboard_input_on = 0;
             // Set cursor
             uint32_t temp = BUFFER_COUNT + (80 - (BUFFER_COUNT % 80));
             row = temp / 80;
@@ -73,7 +74,6 @@ void keyboard_isr(void) {
                 framebuffer_set_cursor(row, col);
             }
             // Stop processing scancodes when enter key is pressed
-            keyboard_state.keyboard_input_on = 0;
         // Handle backspace character
         } else if (mapped_char == '\b') {
             if (BUFFER_COUNT > 0) {    
