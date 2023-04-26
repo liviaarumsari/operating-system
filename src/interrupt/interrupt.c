@@ -1,9 +1,15 @@
 #include "../../include/interrupt.h"
 #include "../../include/keyboard.h"
+#include "../../include/fat32.h"
 #include "../../lib/lib-header/portio.h"
+#include "../../lib/lib-header/stdmem.h"
 #include "../../include/framebuffer.h"
 
-struct TSSEntry _interrupt_tss_entry;
+#define GDT_KERNEL_DATA_SEGMENT_SELECTOR 0x10
+
+struct TSSEntry _interrupt_tss_entry = {
+    .ss0  = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
+};
 
 void io_wait(void) {
     out(0x80, 0);
@@ -54,6 +60,9 @@ void main_interrupt_handler(
     switch (int_number) {
         case (PIC1_OFFSET + IRQ_KEYBOARD):
             keyboard_isr();
+            break;
+        case 0x30:
+            syscall(cpu, info);
             break;        
     }
 }
@@ -70,3 +79,39 @@ void set_tss_kernel_current_stack(void) {
     // Add 8 because 4 for ret address and other 4 is for stack_ptr variable
     _interrupt_tss_entry.esp0 = stack_ptr + 8; 
 }
+
+void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptStack info) {
+    if (cpu.eax == 0) {
+        struct FAT32DriverRequest request = *(struct FAT32DriverRequest*) cpu.ebx;
+        *((int8_t*) cpu.ecx) = read(request);
+    } else if (cpu.eax == 4) {
+        keyboard_state_activate();
+        __asm__("sti"); // Due IRQ is disabled when main_interrupt_handler() called
+        while (is_keyboard_blocking());
+        char buf[KEYBOARD_BUFFER_SIZE];
+        get_keyboard_buffer(buf);
+        memcpy((char *) cpu.ebx, buf, cpu.ecx);
+    } else if (cpu.eax == 5) {
+        // puts((char *) cpu.ebx, cpu.ecx, cpu.edx); // Modified puts() on kernel side
+        char* str = (char*)cpu.ebx;
+        uint32_t len = cpu.ecx;
+        uint8_t fg = cpu.edx & 0xFF; // extract foreground color from edx
+        uint8_t bg = (cpu.edx >> 8) & 0xFF; // extract background color from edx
+        uint8_t row = 0, col = 0; // initialize row and col to zero
+        
+        for (uint32_t i = 0; i < len; i++) {
+            if (str[i] == '\n') {
+                row++;
+                col = 0;
+            } else {
+                framebuffer_write(row, col, str[i], fg, bg);
+                col++;
+                if (col == 80) {
+                    row++;
+                    col = 0;
+                }
+            }
+        }
+    }
+}
+
