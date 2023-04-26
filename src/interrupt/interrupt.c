@@ -4,8 +4,7 @@
 #include "../../lib/lib-header/portio.h"
 #include "../../lib/lib-header/stdmem.h"
 #include "../../include/framebuffer.h"
-
-#define GDT_KERNEL_DATA_SEGMENT_SELECTOR 0x10
+#include "../../include/idt.h"
 
 struct TSSEntry _interrupt_tss_entry = {
     .ss0  = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
