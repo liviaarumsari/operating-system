@@ -30,7 +30,7 @@ static struct KeyboardDriverState keyboard_state = {
     .keyboard_buffer = {[0 ... KEYBOARD_BUFFER_SIZE -1] = 0 }
 };
 
-static uint32_t BUFFER_COUNT = 0;
+uint32_t BUFFER_COUNT = 0;
 
 void keyboard_state_activate(void) {
     keyboard_state.keyboard_input_on = 1;

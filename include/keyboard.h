@@ -22,6 +22,7 @@
  */
 extern const char keyboard_scancode_1_to_ascii_map[256];
 
+extern uint32_t BUFFER_COUNT;
 /**
  * KeyboardDriverState - Contain all driver states
  * 

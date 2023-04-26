@@ -10,6 +10,9 @@ struct TSSEntry _interrupt_tss_entry = {
     .ss0  = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
 };
 
+static uint32_t row = 0;
+static uint32_t col = 0;
+
 void io_wait(void) {
     out(0x80, 0);
 }
@@ -96,20 +99,23 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
         uint32_t len = cpu.ecx;
         uint8_t fg = cpu.edx & 0xFF; // extract foreground color from edx
         uint8_t bg = (cpu.edx >> 8) & 0xFF; // extract background color from edx
-        uint8_t row = 0, col = 0; // initialize row and col to zero
         
         for (uint32_t i = 0; i < len; i++) {
             if (str[i] == '\n') {
+                uint32_t temp = BUFFER_COUNT + (80 - (BUFFER_COUNT % 80));
+                BUFFER_COUNT = temp;
                 row++;
                 col = 0;
             } else {
                 framebuffer_write(row, col, str[i], fg, bg);
+                BUFFER_COUNT++;
                 col++;
                 if (col == 80) {
                     row++;
                     col = 0;
                 }
             }
+            framebuffer_set_cursor(row, col);
         }
     }
 }
