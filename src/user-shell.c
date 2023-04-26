@@ -1,5 +1,7 @@
 #include "../lib/lib-header/stdtype.h"
+#include "../lib/lib-header/string.h"
 #include "../include/fat32.h"
+#include "../include/utility_shell.h"
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
@@ -11,25 +13,18 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("int $0x30");
 }
 
+void puts(char* buf, uint8_t color) {
+    syscall(5, (uint32_t) buf, strlen(buf), color);
+}
 
 int main(void) {
-    struct ClusterBuffer cl           = {0};
-    struct FAT32DriverRequest request = {
-        .buf                   = &cl,
-        .name                  = "ikanaide",
-        .ext                   = "\0\0\0",
-        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
-        .buffer_size           = CLUSTER_SIZE,
-    };
-    int32_t retcode;
-    syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
-    if (retcode == 0)
-        syscall(5, (uint32_t) "owo\n", 4, 0xF);
-
     char buf[16];
     while (TRUE) {
+        puts("sOS@OS-IF2230", BIOS_GREEN);
+        puts(":", BIOS_GRAY);
+        puts(current_directory, BIOS_BLUE);
+        puts("$", BIOS_GRAY);
         syscall(4, (uint32_t) buf, 16, 0);
-        syscall(5, (uint32_t) buf, 16, 0xF);
     }
 
     return 0;
