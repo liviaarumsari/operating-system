@@ -10,8 +10,6 @@ struct TSSEntry _interrupt_tss_entry = {
     .ss0  = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
 };
 
-static uint32_t row = 0;
-static uint32_t col = 0;
 
 void io_wait(void) {
     out(0x80, 0);
@@ -104,18 +102,13 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
             if (str[i] == '\n') {
                 uint32_t temp = BUFFER_COUNT + (80 - (BUFFER_COUNT % 80));
                 BUFFER_COUNT = temp;
-                row++;
-                col = 0;
             } else {
-                framebuffer_write(row, col, str[i], fg, bg);
+                framebuffer_write(BUFFER_COUNT / 80, BUFFER_COUNT % 80, str[i], fg, bg);
                 BUFFER_COUNT++;
-                col++;
-                if (col == 80) {
-                    row++;
-                    col = 0;
-                }
+                if (BUFFER_COUNT % 80 == 79)
+                    BUFFER_COUNT = BUFFER_COUNT + (80 - (BUFFER_COUNT % 80));
             }
-            framebuffer_set_cursor(row, col);
+            framebuffer_set_cursor(BUFFER_COUNT / 80, BUFFER_COUNT % 80);
         }
     }
 }
