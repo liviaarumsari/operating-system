@@ -42,9 +42,10 @@ int8_t allocate_single_user_page_frame(void *virtual_addr) {
     struct PageDirectoryEntryFlag flag = {
         .present_bit = 1,
         .write_bit = 1,
-        .user_supervisor = 1
+        .user_supervisor = 1,
+        .use_pagesize_4_mb = 1,
     };
-    update_page_directory_entry(last_physical_addr, virtual_addr, flag);
+    update_page_directory_entry((void *)last_physical_addr, virtual_addr, flag);
 
     // Update the state of the last available physical address
     page_driver_state.last_available_physical_addr += PAGE_FRAME_SIZE;

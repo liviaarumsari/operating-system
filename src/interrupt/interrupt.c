@@ -3,6 +3,8 @@
 #include "../../lib/lib-header/portio.h"
 #include "../../include/framebuffer.h"
 
+struct TSSEntry _interrupt_tss_entry;
+
 void io_wait(void) {
     out(0x80, 0);
 }
