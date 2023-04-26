@@ -46,7 +46,7 @@ void create_fat32() {
                         [3 ... CLUSTER_MAP_SIZE - 1] = FAT32_FAT_EMPTY_ENTRY}};
 
     struct FAT32DirectoryTable root_directory;
-    init_directory_table(&root_directory, "root\0\0\0\0", cluster_to_lba(ROOT_CLUSTER_NUMBER));
+    init_directory_table(&root_directory, "root\0\0\0\0", ROOT_CLUSTER_NUMBER);
 
     fat32_driver_state.fat_table = fat_table;
     write_clusters(&fat_table, FAT_CLUSTER_NUMBER, 1);
@@ -212,7 +212,10 @@ int8_t write(struct FAT32DriverRequest request) {
             write_clusters(buf_p, empty_cluster_number, 1);
 
             buf_p++;
-            remaining_size -= CLUSTER_SIZE;
+            if (remaining_size < CLUSTER_SIZE)
+                remaining_size = 0;
+            else
+                remaining_size -= CLUSTER_SIZE;
             last_cluster_number = empty_cluster_number;
         }
 
@@ -276,7 +279,7 @@ int8_t delete(struct FAT32DriverRequest request) {
 }
 
 struct FAT32DirectoryEntry *dir_table_linear_search(char *name, char *ext, uint32_t parent_dir_cluster) {
-    while (parent_dir_cluster != FAT32_FAT_EMPTY_ENTRY) {
+    while (parent_dir_cluster != FAT32_FAT_END_OF_FILE) {
         read_clusters(&fat32_driver_state.dir_table_buf.table, parent_dir_cluster, 1);
 
         // Iterate through the directory table
