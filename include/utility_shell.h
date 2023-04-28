@@ -9,6 +9,7 @@
 #define BIOS_GRAY 0x07
 
 extern char* current_directory;
+extern uint32_t cwd_cluster_number;
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
 

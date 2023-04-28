@@ -2,6 +2,7 @@
 #include "../../lib/lib-header/string.h"
 
 char* current_directory = "/";
+uint32_t cwd_cluster_number = 2;
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
