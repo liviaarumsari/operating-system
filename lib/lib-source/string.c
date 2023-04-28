@@ -26,7 +26,7 @@ int strcmp(const char *str1, const char *str2) {
 int countWords(const char* str) {
     int ctr = 0;
     for (int i = 0; i<strlen(str)-1; i++) {
-        if (str[0] != ' ') {
+        if (i == 0 && str[i] != ' ') {
             ctr++;
         }
         else if (str[i] ==' ' && str[i+1] != ' ') {
@@ -45,7 +45,7 @@ int wordLen(const char* str, uint16_t idx) {
         if (word_start != -1 && str[i] == ' ') {
             word_end = i;
         }
-        if (str[0] != ' ') {
+        if (i == 0 && str[i] != ' ') {
             ctr++;
             if (ctr == idx + 1) {
                 word_start = i;
@@ -71,7 +71,7 @@ void getWord(const char* str, uint16_t idx, char* buf) {
     int word_start = -1;
 
     for (int i = 0; i<strlen(str)-1; i++) {
-        if (str[0] != ' ') {
+        if (i == 0 && str[i] != ' ') {
             ctr++;
             if (ctr == idx + 1) {
                 word_start = i;
