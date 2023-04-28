@@ -77,7 +77,7 @@ int wordLen(const char* str, uint16_t idx) {
     int word_end = -1;
 
     for (int i = 0; i<strlen(str)-1; i++) {
-        if (word_start != -1 && str[i] == ' ') {
+        if (word_start != -1 && word_end == -1 && str[i] == ' ') {
             word_end = i;
         }
         if (i == 0 && str[i] != ' ') {
