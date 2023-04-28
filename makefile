@@ -52,14 +52,15 @@ user-shell:
 
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/user-shell.c -o $(OUTPUT_FOLDER)/user-shell.o
 	@$(CC)  $(CFLAGS) -fno-pie $(LIBRARY_FOLDER)/string.c -o $(OUTPUT_FOLDER)/string.o
+	@$(CC)  $(CFLAGS) -fno-pie $(LIBRARY_FOLDER)/stdmem.c -o $(OUTPUT_FOLDER)/stdmem.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/$(UTILITY_SHELL_FOLDER)/utility_shell.c -o $(OUTPUT_FOLDER)/utility_shell.o
 
 	@$(LIN) -T $(SOURCE_FOLDER)/user-linker.ld -melf_i386 \
-		$(OUTPUT_FOLDER)/user-entry.o $(OUTPUT_FOLDER)/user-shell.o $(OUTPUT_FOLDER)/utility_shell.o $(OUTPUT_FOLDER)/string.o -o $(OUTPUT_FOLDER)/shell
+		$(OUTPUT_FOLDER)/user-entry.o $(OUTPUT_FOLDER)/stdmem.o $(OUTPUT_FOLDER)/user-shell.o $(OUTPUT_FOLDER)/utility_shell.o $(OUTPUT_FOLDER)/string.o -o $(OUTPUT_FOLDER)/shell
 	@echo Linking object shell object files and generate flat binary...
 
 	@$(LIN) -T $(SOURCE_FOLDER)/user-linker.ld -melf_i386 --oformat=elf32-i386\
-		$(OUTPUT_FOLDER)/user-entry.o $(OUTPUT_FOLDER)/user-shell.o $(OUTPUT_FOLDER)/utility_shell.o $(OUTPUT_FOLDER)/string.o -o $(OUTPUT_FOLDER)/shell_elf
+		$(OUTPUT_FOLDER)/user-entry.o $(OUTPUT_FOLDER)/stdmem.o $(OUTPUT_FOLDER)/user-shell.o $(OUTPUT_FOLDER)/utility_shell.o $(OUTPUT_FOLDER)/string.o -o $(OUTPUT_FOLDER)/shell_elf
 	@echo Linking object shell object files and generate ELF32 for debugging...
 
 	@size --target=binary bin/shell
