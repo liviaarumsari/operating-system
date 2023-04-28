@@ -42,7 +42,7 @@ void keyboard_state_deactivate(void) {
 
 void get_keyboard_buffer(char *buf) {
     int i;
-    for (i = 0; i < KEYBOARD_BUFFER_SIZE && i < keyboard_state.buffer_index; i++) {
+    for (i = 0; i < KEYBOARD_BUFFER_SIZE; i++) {
         buf[i] = keyboard_state.keyboard_buffer[i];
         keyboard_state.keyboard_buffer[i] = '\0';
     }
@@ -64,7 +64,6 @@ void keyboard_isr(void) {
         uint8_t col;
         // Handle enter character
         if (mapped_char == '\n') {
-            keyboard_state.keyboard_input_on = 0;
             // Set cursor
             uint32_t temp = BUFFER_COUNT + (80 - (BUFFER_COUNT % 80));
             row = temp / 80;
@@ -74,6 +73,8 @@ void keyboard_isr(void) {
                 framebuffer_set_cursor(row, col);
             }
             // Stop processing scancodes when enter key is pressed
+            keyboard_state.keyboard_input_on = 0;
+            // keyboard_state.buffer_index = 0;
         // Handle backspace character
         } else if (mapped_char == '\b') {
             if (BUFFER_COUNT > 0) {    
