@@ -9,7 +9,7 @@ int main(void) {
         puts(":", BIOS_GRAY);
         puts(current_directory, BIOS_BLUE);
         puts("$", BIOS_GRAY);
-        syscall(4, (uint32_t) buf, 16, 0);
+        syscall(4, (uint32_t) buf, 256, 0);
         executeCommand(buf);
     }
     return 0;

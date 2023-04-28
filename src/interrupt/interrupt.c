@@ -120,5 +120,8 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
         framebuffer_clear();
         BUFFER_COUNT = 0;
         framebuffer_set_cursor(0, 0);
+    } else if (cpu.eax == 7) {
+        struct FAT32DirectoryTable *dirtable = (struct FAT32DirectoryTable*)cpu.ebx;
+        read_clusters(dirtable, cpu.ecx, 1);
     }
 }
