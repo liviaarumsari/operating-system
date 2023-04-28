@@ -48,9 +48,10 @@ void executeCommand(char* buf) {
         // panggil fungsi
     }
     else if (strcmp(command, "clear")) {
-        // panggil fungsi
+        syscall(6, 0, 0, 0);
     }
     else {
-        puts("Command not found", BIOS_GRAY);
+        puts(command, BIOS_GRAY);
+        puts(": command not found\n", BIOS_GRAY);
     }
 }

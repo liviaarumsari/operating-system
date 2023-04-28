@@ -99,7 +99,6 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
         get_keyboard_buffer(buf);
         memcpy((char*)cpu.ebx, buf, cpu.ecx);
     } else if (cpu.eax == 5) {
-        // puts((char *) cpu.ebx, cpu.ecx, cpu.edx); // Modified puts() on kernel side
         char* str = (char*)cpu.ebx;
         uint32_t len = cpu.ecx;
         uint8_t fg = cpu.edx & 0xFF;         // extract foreground color from edx
@@ -117,5 +116,9 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
             }
             framebuffer_set_cursor(BUFFER_COUNT / 80, BUFFER_COUNT % 80);
         }
+    } else if (cpu.eax == 6) {
+        framebuffer_clear();
+        BUFFER_COUNT = 0;
+        framebuffer_set_cursor(0, 0);
     }
 }
