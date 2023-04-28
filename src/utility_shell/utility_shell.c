@@ -22,6 +22,43 @@ void puts(char* buf, uint8_t color) {
 }
 
 void copy(char* src_name, char* src_ext, uint32_t src_parent_number, char* target_name, char* target_ext, uint32_t target_parent_number) {
+    uint32_t src_size;
+    bool is_dir = 0;
+    struct FAT32DirectoryTable src_table;
+    syscall(7, (uint32_t)&src_table, src_parent_number, 0);
+    
+    for (int32_t i = 0; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
+        if (memcmp(src_table.table[i].name, src_name, 8) == 0 &&
+            memcmp(src_table.table[i].ext, src_ext, 3) == 0) {
+            src_size = src_table.table[i].filesize;
+            is_dir = src_table.table[i].attribute == ATTR_SUBDIRECTORY;
+            break;
+        }
+    }
+    
+    struct ClusterBuffer data_buf[(src_size + CLUSTER_SIZE - 1) / CLUSTER_SIZE];
+    struct FAT32DriverRequest request = {
+        .buf = data_buf,
+        .name = "",
+        .ext = "",
+        .buffer_size = src_size,
+        .parent_cluster_number = src_parent_number
+    };
+    memcpy(request.name, src_name, 8);
+    memcpy(request.ext, src_ext, 3);
+
+    int8_t retcode;
+    if (is_dir)
+        syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
+    else
+        syscall(0, (uint32_t)&request, (uint32_t)&retcode, 0);
+
+    memcpy(request.name, target_name, 8);
+    memcpy(request.ext, target_ext, 3);
+    request.parent_cluster_number = target_parent_number;
+    syscall(2, (uint32_t)&request, (uint32_t)&retcode, 0);
+    if (retcode != 0)
+        puts("Error writing to file", BIOS_GRAY);
 }
 
 void cp(char* command) {
@@ -46,10 +83,15 @@ void cp(char* command) {
             recursive = i;
     }
 
+    if ((recursive == -1 && n_words < 3) || (recursive != -1 && n_words < 4)) {
+        puts(": missing file operands\n", BIOS_GRAY);
+        return;
+    }
+
     // check if all source exists
-    for (uint16_t i = 1; i < n_words; i++) {
-        uint16_t n = wordLen(command, i);
-        char filename[n + 1];
+    for (uint16_t i = 1; i < n_words - 1; i++) {
+        // uint16_t n = wordLen(command, i);
+        char filename[12];
         getWord(command, i, filename);
 
         char name[9];
@@ -88,31 +130,55 @@ void cp(char* command) {
 
     char target_name[9];
     char target_ext[4];
+
+    if (parseFileName(target_filename, target_name, target_ext)) {
+        puts(target_filename, BIOS_GRAY);
+        puts(": filename invalid, name or extension may be too long\n", BIOS_GRAY);
+        return;
+    }
+
     memcpy(request.name, target_name, 8);
     memcpy(request.ext, target_ext, 3);
     syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
     
-    // target exists
-    if (retcode != 2) {
-        // target is a directory
-        if (retcode == 0) {
-            uint32_t target_cluster_number;
-            for (int32_t i = 0; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
-                if (memcmp(cwd_table.table[i].name, target_name, 8) == 0 &&
-                    memcmp(cwd_table.table[i].ext, target_ext, 3) == 0) {
-                    target_cluster_number = (cwd_table.table[i].cluster_high << 16) | cwd_table.table[i].cluster_low;
-                }
+    // target is an existing directory
+    if (retcode == 0) {
+        uint32_t target_cluster_number;
+        for (int32_t i = 0; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
+            if (memcmp(cwd_table.table[i].name, target_name, 8) == 0 &&
+                memcmp(cwd_table.table[i].ext, target_ext, 3) == 0) {
+                target_cluster_number = (cwd_table.table[i].cluster_high << 16) | cwd_table.table[i].cluster_low;
             }
+        }
+
+        for (int16_t i = 1; i < n_words; i++) {
+            if (i == recursive || i == target_idx) continue;
+            char filename[12];
+            getWord(command, i, filename);
+            char name[9];
+            char ext[4];
+            parseFileName(filename, name, ext);
+
+            copy(name, ext, cwd_cluster_number, name, ext, target_cluster_number);
+        }
+    } else if (retcode == 1 || retcode == 2) {
+        if ((recursive == -1 && n_words > 3) || (recursive != -1 && n_words > 4)) {
+            puts(target_filename, BIOS_GRAY);
+            puts(": is not a folder\n", BIOS_GRAY);
+            return;
+        } else {
+            if (retcode == 1)
+                syscall(3, (uint32_t)&request, (uint32_t)&retcode, 0);
 
             for (int16_t i = 1; i < n_words; i++) {
-                if (i == recursive) continue;
-                uint16_t n = wordLen(command, i);
-                char filename[n + 1];
+                if (i == recursive || i == target_idx) continue;
+                char filename[12];
                 getWord(command, i, filename);
                 char name[9];
                 char ext[4];
+                parseFileName(filename, name, ext);
 
-                copy(name, ext, cwd_cluster_number, name, ext, target_cluster_number);
+                copy(name, ext, cwd_cluster_number, target_name, target_ext, cwd_cluster_number);
             }
         }
     }

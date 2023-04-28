@@ -13,7 +13,7 @@ int main(void) {
         .parent_cluster_number = 2
     };
     int retcode;
-    syscall(1, (uint32_t)&req, &retcode, 0);
+    syscall(1, (uint32_t)&req, (uint32_t)&retcode, 0);
 
     while (TRUE) {
         puts("sOS@OS-IF2230", BIOS_GREEN);
