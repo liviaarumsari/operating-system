@@ -72,11 +72,18 @@ void whereisCommand(char* buf) {
         puts(": filename invalid, name or extension may be too long\n", BIOS_GRAY);
         return;
     }
+    puts(searchName, BIOS_GRAY);
+    puts(":", BIOS_GRAY);
 
-    DFSsearch("root\0\0\0", ROOT_CLUSTER_NUMBER, name);
+    int8_t isFileFound = 0;
+    DFSsearch("root\0\0\0", ROOT_CLUSTER_NUMBER, name, &isFileFound);
+    if (!isFileFound) {
+        puts(" file/folder is not found", BIOS_GRAY);
+    }
+    puts("\n", BIOS_GRAY);
 }
 
-void DFSsearch(char* folderName, uint32_t parentCluster, char* searchName) {
+void DFSsearch(char* folderName, uint32_t parentCluster, char* searchName, int8_t* isFound) {
     struct FAT32DirectoryTable dirtable;
     struct FAT32DriverRequest request = {
         .buf                   = &dirtable,
@@ -96,7 +103,8 @@ void DFSsearch(char* folderName, uint32_t parentCluster, char* searchName) {
         for (; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
             uint32_t clusterAddress = (dirtable.table[i].cluster_high << 16) | dirtable.table[i].cluster_low;
             if (strcmp(dirtable.table[i].name,searchName)) {
-                puts("root", BIOS_GRAY);
+                *isFound = 1;
+                puts("  root", BIOS_GRAY);
                 constructPath(clusterAddress);
                 if (dirtable.table[i].attribute != ATTR_SUBDIRECTORY && !strcmp(dirtable.table[i].ext, "\0\0\0")) {
                     puts(".", BIOS_GRAY);
@@ -104,7 +112,7 @@ void DFSsearch(char* folderName, uint32_t parentCluster, char* searchName) {
                 }
             }
             if (dirtable.table[i].attribute == ATTR_SUBDIRECTORY) {
-                DFSsearch(dirtable.table[i].name, clusterAddress, searchName);
+                DFSsearch(dirtable.table[i].name, clusterAddress, searchName, isFound);
             }
         }  
     }

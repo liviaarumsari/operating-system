@@ -19,7 +19,7 @@ void executeCommand(char* buf);
 
 void whereisCommand(char* buf);
 
-void DFSsearch(char* folderName, uint32_t parentCluster, char* searchName);
+void DFSsearch(char* folderName, uint32_t parentCluster, char* searchName, int8_t* isFound);
 
 void constructPath(uint32_t clusterAddress);
 
