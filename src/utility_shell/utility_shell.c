@@ -62,20 +62,39 @@ void cd(char* command) {
     char path[n_word+1];
     getWord(command, 1, path);
 
-    puts(path, BIOS_GRAY);
-    puts("\n", BIOS_GRAY);
-
-    // If the path is empty, set the current directory to root
+    // If the path is empty, return
     if (strlen(path) == 0) {
-        current_directory = "/";
-        cwd_cluster_number = 2;
         return;
     }
 
     // Check if the path is valid
     struct FAT32DirectoryTable table = cwd_table;
     uint32_t cluster_number = cwd_cluster_number;
-    char* token = strtok(path, "/");
+    char dest_path[strlen(path)+1];
+
+    // If the path starts with '/', implement absolute path
+    if (path[0] == '/') {
+        cluster_number = 2;
+
+        // If the rest of the path is empty, set the current directory to root
+        if (strlen(path) == 1) {
+            current_directory = "/";
+            cwd_cluster_number = 2;
+            return;
+        }
+
+        // Copy the rest of the path to dest_path
+        for (int i = 1; i < strlen(path); i++) {
+            dest_path[i-1] = path[i];
+        }
+    } else {
+        for (int i = 0; i < strlen(path); i++) {
+            dest_path[i] = path[i];
+        }
+    }
+
+    // Tokenize the path
+    char* token = strtok(dest_path, "/");
 
     // Iterate through the path
     while (token != NULL) {
@@ -115,11 +134,8 @@ void cd(char* command) {
         token = strtok(NULL, "/");
     }
 
-    puts(path, BIOS_GRAY);
-    puts("\n", BIOS_GRAY);
-
     // If the path is valid, set the current directory to the path
-    current_directory = path;
+    current_directory = dest_path;
     cwd_cluster_number = cluster_number;
 }
 
