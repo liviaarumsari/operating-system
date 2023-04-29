@@ -44,8 +44,10 @@ void executeCommand(char* buf);
 
 void whereisCommand(char* buf);
 
-void DFSsearch(char* folderName, uint32_t parentCluster, char* searchName);
+void DFSsearch(uint32_t folderAddress, char* searchName, int8_t* isFound);
 
 void constructPath(uint32_t clusterAddress);
+
+void moveCommand(char* buf);
 
 #endif
