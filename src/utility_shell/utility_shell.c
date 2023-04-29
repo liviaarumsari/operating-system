@@ -62,6 +62,9 @@ void cd(char* command) {
     char path[n_word+1];
     getWord(command, 1, path);
 
+    puts(path, BIOS_GRAY);
+    puts("\n", BIOS_GRAY);
+
     // If the path is empty, set the current directory to root
     if (strlen(path) == 0) {
         current_directory = "/";
@@ -69,49 +72,51 @@ void cd(char* command) {
         return;
     }
 
-    // If the path is not empty, check if the path is valid
-    struct FAT32DirectoryTable table;
+    // Check if the path is valid
+    struct FAT32DirectoryTable table = cwd_table;
     uint32_t cluster_number = cwd_cluster_number;
     char* token = strtok(path, "/");
-    while (token != ((void*)0)) {
+
+    // Iterate through the path
+    while (token != NULL) {
+        // For debug: check token
+        puts("Token: ", BIOS_GRAY);
+        puts(token, BIOS_GRAY);
+        puts("\n", BIOS_GRAY);
+
         // Read the directory table
         syscall(7, (uint32_t) &table, cluster_number, 0);
 
         // Iterate through the directory table
         bool found = 0;
         for (int32_t i = 1; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
+
             // If the entry is empty, skip
             if (table.table[i].name[0] == 0x00)
                 continue;
 
-            // If the entry is a folder
-            if (table.table[i].attribute == ATTR_SUBDIRECTORY) {
-                // If the entry name is the same as the token
-                if (strncmp(table.table[i].name, token, 11) == 0) {
-                    // Set the cluster number to the entry cluster number
-                    cluster_number = table.table[i].cluster_low;
-                    found = 1;
-                    break;
-                }
-            } else if (strncmp(table.table[i].name, token, 11) == 0) {
-                // If the entry is a file, put error message and return
-                puts(token, BIOS_RED);
-                puts(": Not a directory\n", BIOS_GRAY);
+            // If the entry has the same name as the token and is a folder
+            if (table.table[i].attribute == ATTR_SUBDIRECTORY && strcmp(table.table[i].name, token) != 0) {
+                // Set the cluster number to the entry cluster number
+                cluster_number = table.table[i].cluster_low | (table.table[i].cluster_high << 16);
                 found = 1;
-                return;
+                break;
             }
         }
 
         // If the token is not found, put error message and return
         if (!found) {
             puts(token, BIOS_RED);
-            puts(": No such file or directory\n", BIOS_GRAY);
+            puts(": No such directory\n", BIOS_GRAY);
             return;
         }
 
         // Get the next token
-        token = strtok(((void*)0), "/");
+        token = strtok(NULL, "/");
     }
+
+    puts(path, BIOS_GRAY);
+    puts("\n", BIOS_GRAY);
 
     // If the path is valid, set the current directory to the path
     current_directory = path;
