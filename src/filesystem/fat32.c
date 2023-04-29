@@ -319,17 +319,12 @@ bool is_cluster_directory(uint32_t cluster_number) {
             visited[i] = 1;
             read_clusters(&fat32_driver_state.dir_table_buf, i, 1);
 
-            uint32_t j = 0;
-            struct FAT32DirectoryEntry entry = fat32_driver_state.dir_table_buf.table[j];
-
-            while (entry.user_attribute == UATTR_NOT_EMPTY) {
-                uint32_t entry_cluster_number = (entry.cluster_high << 16) | entry.cluster_low;
-
+            for (int32_t i = 0; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
+                struct FAT32DirectoryEntry entry = fat32_driver_state.dir_table_buf.table[i];
+                
                 if (entry.attribute == ATTR_SUBDIRECTORY) {
-                    is_directory[entry_cluster_number] = 1;
+                    is_directory[(entry.cluster_high << 16) | entry.cluster_low] = 1;
                 }
-
-                entry = fat32_driver_state.dir_table_buf.table[++j];
             }
 
             uint32_t next_cluster = fat32_driver_state.fat_table.cluster_map[i];
