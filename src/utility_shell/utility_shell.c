@@ -56,7 +56,7 @@ void mkdir(char* newDirectoryPath) {
         while (*currentPart != '\0') {
             if (*currentPart == '/') {
                 // Found a '/' character, terminate the function
-                puts("Invalid path.", BIOS_RED);
+                puts("Invalid path.\n", BIOS_RED);
                 return;
             }
             currentPart++;
@@ -72,79 +72,65 @@ void mkdir(char* newDirectoryPath) {
         }
 
         uint32_t currentClusterNumber = ROOT_CLUSTER_NUMBER;
-        uint32_t customReadRetVal = 0;  // Return value of the custom read_directory
 
         for (int i = 0; i < numParts; i++) {
 
-            if (customReadRetVal == 1) {
-                puts("Not a folder.", BIOS_RED);
-                return;
-            }
-
-            else if (customReadRetVal == 2) {
-
-                if (i == numParts - 1) {
-                    // Create write request
-                    struct FAT32DriverRequest writeRequest = {
-                        .name = "\0\0\0\0\0\0\0\0",
-                        .ext = "\0\0\0",
-                        .parent_cluster_number = currentClusterNumber,
-                        .buffer_size = 0,  // 0 means we're creating a directory
-                    };
-
-                    getWord(pathParts[i], 0, writeRequest.name);
-                    
-                    int8_t retCode = 0;
-                    syscall(2, (uint32_t) &writeRequest, (uint32_t) &retCode, 0);  // write
-
-                    if (retCode == 0) {
-                        puts("Successfully created directory ", BIOS_GREEN);
-                        puts(pathParts[i], BIOS_GRAY);
-                        puts(".\n", BIOS_GREEN);
-                        return;
-                    } else if (retCode == 1) {
-                        puts("Folder ", BIOS_RED);
-                        puts(pathParts[i], BIOS_GRAY);
-                        puts(" already exists.\n", BIOS_RED);
-                        return;
-                    } else if (retCode == 2) {
-                        puts("Invalid parent cluster.\n", BIOS_RED);
-                        return;
-                    } else if (retCode == -1) {
-                        puts("Unknown error.\n", BIOS_RED);
-                        return;
-                    }
-                }
-
-                puts("No such directory.\n", BIOS_RED);
-                return;
-            }
-
-            else if (customReadRetVal == 3) {
-                puts("Unknown error.\n", BIOS_RED);
-                return;
-            }
-
-            struct FAT32DriverRequest readDirectoryRequest = {
+            // Create findClusterNumber request
+            struct FAT32DriverRequest findRequest = {
                 .name = "\0\0\0\0\0\0\0\0",
                 .ext = "\0\0\0",
                 .parent_cluster_number = currentClusterNumber,
+                .buffer_size = 0,  // 0 means we're creating a directory
             };
 
-            getWord(pathParts[i], 0, readDirectoryRequest.name);
+            getWord(pathParts[i], 0, findRequest.name);
             
-            // custom_read_directory
-            syscall(9, (uint32_t) &readDirectoryRequest, (uint32_t) &customReadRetVal, 0);
-            currentClusterNumber = customReadRetVal;
+            // Find the cluster number of pathParts[i] in CWD
+            // Returns 0 if it is not found
+            uint32_t childClusterNumber = 0;
+            syscall(9, (uint32_t) &findRequest, (uint32_t) &childClusterNumber, 0);
 
-            if (i == numParts - 1) {
+            if (childClusterNumber == 0) {
+                // notFoundCount++;
 
-                if (customReadRetVal == 2) {
+                if (/*notFoundCount > 1 || */i != numParts - 1) {
+                    puts("No such directory.\n", BIOS_RED);
+                    return;
+                }
+
+                // Create write request
+                struct FAT32DriverRequest writeRequest = {
+                    .name = "\0\0\0\0\0\0\0\0",
+                    .ext = "\0\0\0",
+                    .parent_cluster_number = currentClusterNumber,
+                    .buffer_size = 0,  // 0 means we're creating a directory
+                };
+
+                getWord(pathParts[i], 0, writeRequest.name);
+                
+                int8_t retCode = 0;
+                syscall(2, (uint32_t) &writeRequest, (uint32_t) &retCode, 0);  // write
+
+                if (retCode == 0) {
+                    puts("Successfully created directory ", BIOS_GREEN);
+                    puts(pathParts[i], BIOS_GRAY);
+                    puts(".\n", BIOS_GREEN);
+                    return;
+                } else if (retCode == 1) {
                     puts("Folder ", BIOS_RED);
                     puts(pathParts[i], BIOS_GRAY);
                     puts(" already exists.\n", BIOS_RED);
                     return;
+                } else if (retCode == 2) {
+                    puts("Invalid parent cluster.\n", BIOS_RED);
+                    return;
+                } else if (retCode == -1) {
+                    puts("Unknown error.\n", BIOS_RED);
+                    return;
                 }
+            }
+
+            if (i == numParts - 1) {
 
                 // Create write request
                 struct FAT32DriverRequest writeRequest = {
@@ -181,117 +167,8 @@ void mkdir(char* newDirectoryPath) {
     }
     
     else {
-
+        
         uint32_t currentClusterNumber = cwd_cluster_number;
-        uint32_t customReadRetVal = 0;  // Return value of the custom read_directory
-
-        for (int i = 0; i < numParts; i++) {
-
-            if (customReadRetVal == 1) {
-                puts("Not a folder.", BIOS_RED);
-                return;
-            } else if (customReadRetVal == 2) {
-
-                // if (i == numParts - 1) {
-                //     // Create write request
-                //     struct FAT32DriverRequest writeRequest = {
-                //         .name = "\0\0\0\0\0\0\0\0",
-                //         .ext = "\0\0\0",
-                //         .parent_cluster_number = currentClusterNumber,
-                //         .buffer_size = 0,  // 0 means we're creating a directory
-                //     };
-
-                //     getWord(pathParts[i], 0, writeRequest.name);
-                    
-                //     int8_t retCode = 0;
-                //     syscall(2, (uint32_t) &writeRequest, (uint32_t) &retCode, 0);  // write
-
-                //     if (retCode == 0) {
-                //         puts("Successfully created directory ", BIOS_GREEN);
-                //         puts(pathParts[i], BIOS_GRAY);
-                //         puts(".\n", BIOS_GREEN);
-                //         return;
-                //     } else if (retCode == 1) {
-                //         puts("Folder ", BIOS_RED);
-                //         puts(pathParts[i], BIOS_GRAY);
-                //         puts(" already exists.\n", BIOS_RED);
-                //         return;
-                //     } else if (retCode == 2) {
-                //         puts("Invalid parent cluster.\n", BIOS_RED);
-                //         return;
-                //     } else if (retCode == -1) {
-                //         puts("Unknown error.\n", BIOS_RED);
-                //         return;
-                //     }
-                // }
-
-                puts("No such directory.\n", BIOS_RED);
-                return;
-            } else if (customReadRetVal == 3) {
-                puts("Unknown error.\n", BIOS_RED);
-                return;
-            }
-
-            struct FAT32DriverRequest readDirectoryRequest = {
-                .name = "\0\0\0\0\0\0\0\0",
-                .ext = "\0\0\0",
-                .parent_cluster_number = currentClusterNumber,
-            };
-
-            getWord(pathParts[i], 0, readDirectoryRequest.name);
-            
-            // custom_read_directory
-            syscall(9, (uint32_t) &readDirectoryRequest, (uint32_t) &customReadRetVal, 0);
-            currentClusterNumber = customReadRetVal;
-            
-            if (i == numParts - 1) {
-
-                if (customReadRetVal == 1) {
-                    puts("Not a folder.", BIOS_RED);
-                    return;
-                } else if (customReadRetVal == 2) {
-
-                    // Create write request
-                    struct FAT32DriverRequest writeRequest = {
-                        .name = "\0\0\0\0\0\0\0\0",
-                        .ext = "\0\0\0",
-                        .parent_cluster_number = currentClusterNumber,
-                        .buffer_size = 0,  // 0 means we're creating a directory
-                    };
-
-                    getWord(pathParts[i], 0, writeRequest.name);
-                    
-                    int8_t retCode = 0;
-                    syscall(2, (uint32_t) &writeRequest, (uint32_t) &retCode, 0);  // write
-
-                    if (retCode == 0) {
-                        puts("Successfully created directory ", BIOS_GREEN);
-                        puts(pathParts[i], BIOS_GRAY);
-                        puts(".\n", BIOS_GREEN);
-                        return;
-                    } else if (retCode == 1) {
-                        puts("Folder ", BIOS_RED);
-                        puts(pathParts[i], BIOS_GRAY);
-                        puts(" already exists.\n", BIOS_RED);
-                        return;
-                    } else if (retCode == 2) {
-                        puts("Invalid parent cluster.\n", BIOS_RED);
-                        return;
-                    } else if (retCode == -1) {
-                        puts("Unknown error.\n", BIOS_RED);
-                        return;
-                    }
-                } else if (customReadRetVal == 3) {
-                    puts("Unknown error.\n", BIOS_RED);
-                    return;
-                }
-
-                puts("Folder ", BIOS_RED);
-                puts(pathParts[i], BIOS_GRAY);
-                puts(" already exists.\n", BIOS_RED);
-                return;
-            }
-        }
 
         // This happens if there is no slash (/) in new directory path.
         // For example: mkdir abc
@@ -326,6 +203,98 @@ void mkdir(char* newDirectoryPath) {
             } else if (retCode == -1) {
                 puts("Unknown error.\n", BIOS_RED);
                 return;
+            }
+        }
+
+        for (int i = 0; i < numParts; i++) {
+
+            // Create findClusterNumber request
+            struct FAT32DriverRequest findRequest = {
+                .name = "\0\0\0\0\0\0\0\0",
+                .ext = "\0\0\0",
+                .parent_cluster_number = currentClusterNumber,
+                .buffer_size = 0,  // 0 means we're creating a directory
+            };
+
+            getWord(pathParts[i], 0, findRequest.name);
+            
+            // Find the cluster number of pathParts[i] in CWD
+            // Returns 0 if it is not found
+            uint32_t childClusterNumber = 0;
+            syscall(9, (uint32_t) &findRequest, (uint32_t) &childClusterNumber, 0);
+
+            if (childClusterNumber == 0) {
+                // notFoundCount++;
+
+                if (/*notFoundCount > 1 || */i != numParts - 1) {
+                    puts("No such directory.\n", BIOS_RED);
+                    return;
+                }
+
+                // Create write request
+                struct FAT32DriverRequest writeRequest = {
+                    .name = "\0\0\0\0\0\0\0\0",
+                    .ext = "\0\0\0",
+                    .parent_cluster_number = currentClusterNumber,
+                    .buffer_size = 0,  // 0 means we're creating a directory
+                };
+
+                getWord(pathParts[i], 0, writeRequest.name);
+                
+                int8_t retCode = 0;
+                syscall(2, (uint32_t) &writeRequest, (uint32_t) &retCode, 0);  // write
+
+                if (retCode == 0) {
+                    puts("Successfully created directory ", BIOS_GREEN);
+                    puts(pathParts[i], BIOS_GRAY);
+                    puts(".\n", BIOS_GREEN);
+                    return;
+                } else if (retCode == 1) {
+                    puts("Folder ", BIOS_RED);
+                    puts(pathParts[i], BIOS_GRAY);
+                    puts(" already exists.\n", BIOS_RED);
+                    return;
+                } else if (retCode == 2) {
+                    puts("Invalid parent cluster.\n", BIOS_RED);
+                    return;
+                } else if (retCode == -1) {
+                    puts("Unknown error.\n", BIOS_RED);
+                    return;
+                }
+            }
+
+            if (i == numParts - 1) {
+
+                // Create write request
+                struct FAT32DriverRequest writeRequest = {
+                    .name = "\0\0\0\0\0\0\0\0",
+                    .ext = "\0\0\0",
+                    .parent_cluster_number = currentClusterNumber,
+                    .buffer_size = 0,  // 0 means we're creating a directory
+                };
+
+                getWord(pathParts[i], 0, writeRequest.name);
+                
+                int8_t retCode = 0;
+                syscall(2, (uint32_t) &writeRequest, (uint32_t) &retCode, 0);  // write
+
+                if (retCode == 0) {
+                    puts("Successfully created directory ", BIOS_GREEN);
+                    puts(pathParts[i], BIOS_GRAY);
+                    puts(".\n", BIOS_GREEN);
+                    return;
+                } else if (retCode == 1) {
+                    puts("Folder ", BIOS_RED);
+                    puts(pathParts[i], BIOS_GRAY);
+                    puts(" already exists.\n", BIOS_RED);
+                    return;
+                } else if (retCode == 2) {
+                    puts("Invalid parent cluster.\n", BIOS_RED);
+                    return;
+                } else if (retCode == -1) {
+                    puts("Unknown error.\n", BIOS_RED);
+                    return;
+                }
             }
         }
     }

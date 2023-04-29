@@ -235,6 +235,15 @@ uint32_t custom_read_directory(struct FAT32DriverRequest request);
 int8_t read(struct FAT32DriverRequest request);
 
 /**
+ * @brief Find the cluster number for a given directory entry
+ * 
+ * @param request The FAT32 driver request containing the directory entry name, extension, and parent cluster number
+ * 
+ * @return The cluster number for the directory entry, or 0 if it cannot be found
+ */
+uint32_t findClusterNumber(struct FAT32DriverRequest request);
+
+/**
  * FAT32 write, write a file or folder to file system.
  *
  * @param request All attribute will be used for write, buffer_size == 0 then create a folder / directory
