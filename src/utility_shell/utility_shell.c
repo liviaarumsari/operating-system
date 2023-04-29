@@ -353,7 +353,8 @@ void extractFilenameExtension(char* filename, char* name, char* extension) {
     
     // if '.' is not found or is the first character or the last character
     if (dot_index == -1 || dot_index == 0 || dot_index == i-1) {
-        name[0] = '\0';
+        // if there is no extension, consider the entire filename as name
+        getWord(filename, 0, name);
         extension[0] = '\0';
         return;
     }
@@ -437,7 +438,7 @@ void cat(char* filePath) {
                     .name = "\0\0\0\0\0\0\0\0",
                     .ext = "\0\0\0",
                     .parent_cluster_number = currentClusterNumber,
-                    .buffer_size = sizeof(cl), 
+                    .buffer_size = CLUSTER_SIZE, 
                 };
 
                 char name[8] = "\0\0\0\0\0\0\0\0";
@@ -510,7 +511,7 @@ void cat(char* filePath) {
                 .name = "\0\0\0\0\0\0\0\0",
                 .ext = "\0\0\0",
                 .parent_cluster_number = currentClusterNumber,
-                .buffer_size = sizeof(cl), 
+                .buffer_size = CLUSTER_SIZE, 
             };
 
             char name[8] = "\0\0\0\0\0\0\0\0";
@@ -598,7 +599,7 @@ void cat(char* filePath) {
                     .name = "\0\0\0\0\0\0\0\0",
                     .ext = "\0\0\0",
                     .parent_cluster_number = currentClusterNumber,
-                    .buffer_size = sizeof(cl), 
+                    .buffer_size = CLUSTER_SIZE, 
                 };
 
                 char name[8] = "\0\0\0\0\0\0\0\0";
