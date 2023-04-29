@@ -558,11 +558,6 @@ void whereisCommand(char* buf) {
     puts(searchName, BIOS_GRAY);
     puts(":", BIOS_GRAY);
 
-    if (strcmp(name, "root\0\0\0")) {
-        puts("  root\n", BIOS_GRAY);
-        return;
-    }
-
     int8_t isFileFound = 0;
 
     DFSsearch(ROOT_CLUSTER_NUMBER, name, &isFileFound);
@@ -573,24 +568,13 @@ void whereisCommand(char* buf) {
 }
 
 void DFSsearch(uint32_t folderAddress, char* searchName, int8_t* isFound) {
-    // struct FAT32DirectoryTable dirtable;
-    // struct FAT32DriverRequest request = {
-    //     .buf                   = &dirtable,
-    //     .name                  = "",
-    //     .ext                   = "\0\0\0",
-    //     .parent_cluster_number = parentCluster,
-    //     .buffer_size           = CLUSTER_SIZE
-    // };
-    // memcpy(request.name, folderName, 8);
-    // int32_t retcode;
-    // syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
     struct FAT32DirectoryTable dirtable;
     syscall(7, (uint32_t) &dirtable, folderAddress, 0);
     for (size_t i = 1; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
         uint32_t clusterAddress = (dirtable.table[i].cluster_high << 16) | dirtable.table[i].cluster_low;
         if (strcmp(dirtable.table[i].name,searchName)) {
             *isFound = 1;
-            puts("  root", BIOS_GRAY);
+            puts("  ", BIOS_GRAY);
             if (dirtable.table[i].attribute != ATTR_SUBDIRECTORY) {
                 constructPath(folderAddress);
                 puts("/", BIOS_GRAY);
@@ -638,25 +622,106 @@ void moveCommand(char* buf){
     char param2[n_param2 + 1];
     getWord(buf, 2, param2);
 
-    // Remove command
-    char removeCommand[n_param1 + 4];
-    removeCommand[0] = 'r';
-    removeCommand[1] = 'm';
-    removeCommand[2] = ' ';
-    for (int16_t i = 0; i <= n_param1; i++) {
-        removeCommand[3+i] = param1[i];
+    // Validation
+    struct FAT32DirectoryTable table_buf = {0};
+    struct FAT32DriverRequest request = {
+        .buf = &table_buf,
+        .name = "\0\0\0\0\0\0\0",
+        .ext = "\0\0",
+        .parent_cluster_number = cwd_cluster_number,
+        .buffer_size = sizeof(struct FAT32DirectoryEntry)
+    };
+    uint32_t retcode = 0;
+
+    int8_t isDirectory = 0;
+    char name[9];
+    char ext[4];
+
+    // if filename is too long
+    if (parseFileName(param1, name, ext)) {
+        puts(param1, BIOS_GRAY);
+        puts(": filename invalid, name or extension may be too long\n", BIOS_GRAY);
+        return;
     }
 
-    // Copy command
-    char copyCommand[n_param1 + n_param2 + 5];
-    memcpy(copyCommand, removeCommand, n_param1 + 3);
-    copyCommand[0] = 'c';
-    copyCommand[1] = 'p';
-    copyCommand[n_param1+3] = ' ';
-    for (int16_t i = 0; i <= n_param2; i++) {
-        copyCommand[n_param1 +4+i] = param2[i];
+    memcpy(request.name, name, 8);
+    memcpy(request.ext, ext, 3);
+    syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
+    if (retcode == 2) {
+        puts(param1, BIOS_GRAY);
+        puts(": not found\n", BIOS_GRAY);
+        return;
+    }
+    if (retcode == 0) {
+        isDirectory = 1;
     }
 
-    cp(copyCommand);
-    rm(removeCommand);
+    // if filename is too long
+    if (parseFileName(param2, name, ext)) {
+        puts(param2, BIOS_GRAY);
+        puts(": filename invalid, name or extension may be too long\n", BIOS_GRAY);
+        return;
+    }
+
+    memcpy(request.name, name, 8);
+    memcpy(request.ext, ext, 3);
+    syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
+    if (retcode == 2) {
+        puts(param2, BIOS_GRAY);
+        puts(": not found\n", BIOS_GRAY);
+        return;
+    }
+    if (retcode != 0 && isDirectory) {
+        puts(param2, BIOS_GRAY);
+        puts(": not a directory. Cannot move directory to file\n", BIOS_GRAY);
+        return;
+    }
+
+    if (isDirectory) {
+        // Remove folder command
+        char removeCommand[n_param1 + 7];
+        removeCommand[0] = 'r';
+        removeCommand[1] = 'm';
+        removeCommand[2] = ' ';
+        removeCommand[3] = '-';
+        removeCommand[4] = 'r';
+        removeCommand[5] = ' ';
+        for (int16_t i = 0; i <= n_param1; i++) {
+            removeCommand[6+i] = param1[i];
+        }
+
+        // Copy folder command
+        char copyCommand[n_param1 + n_param2 + 8];
+        memcpy(copyCommand, removeCommand, n_param1 + 6);
+        copyCommand[0] = 'c';
+        copyCommand[1] = 'p';
+        copyCommand[n_param1+6] = ' ';
+        for (int16_t i = 0; i <= n_param2; i++) {
+            copyCommand[n_param1 +7+i] = param2[i];
+        }
+        cp(copyCommand);
+        rm(removeCommand);
+    }
+    else {
+        // Remove file command
+        char removeCommand[n_param1 + 4];
+        removeCommand[0] = 'r';
+        removeCommand[1] = 'm';
+        removeCommand[2] = ' ';
+        for (int16_t i = 0; i <= n_param1; i++) {
+            removeCommand[3+i] = param1[i];
+        }
+
+        // Copy file command
+        char copyCommand[n_param1 + n_param2 + 5];
+        memcpy(copyCommand, removeCommand, n_param1 + 3);
+        copyCommand[0] = 'c';
+        copyCommand[1] = 'p';
+        copyCommand[n_param1+3] = ' ';
+        for (int16_t i = 0; i <= n_param2; i++) {
+            copyCommand[n_param1 +4+i] = param2[i];
+        }
+        cp(copyCommand);
+        rm(removeCommand);
+    }
 }
