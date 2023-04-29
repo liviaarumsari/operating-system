@@ -4,7 +4,7 @@
 
 int main(void) {
     char buf[256];
-
+    splashScreen();
     while (TRUE) {
         syscall(7, (uint32_t)&cwd_table, (uint32_t)cwd_cluster_number, 0);
 
