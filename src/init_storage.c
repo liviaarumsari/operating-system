@@ -70,7 +70,7 @@ void kernel_setup(void) {
         .buf                   = &single_clustera,
         .name                  = "file3\0\0\0",
         .ext                   = "\0\0\0",
-        .parent_cluster_number = 8,
+        .parent_cluster_number = 3,
         .buffer_size           = CLUSTER_SIZE,
     };
 
@@ -80,7 +80,7 @@ void kernel_setup(void) {
         .buf                   = &single_clustera,
         .name                  = "folder2\0",
         .ext                   = "\0\0\0",
-        .parent_cluster_number = 8,
+        .parent_cluster_number = 3,
         .buffer_size           = 0,
     };
 
@@ -90,7 +90,7 @@ void kernel_setup(void) {
         .buf                   = &single_clustera,
         .name                  = "file4\0\0\0",
         .ext                   = "\0\0\0",
-        .parent_cluster_number = 12,
+        .parent_cluster_number = 7,
         .buffer_size           = CLUSTER_SIZE,
     };
 
