@@ -21,6 +21,11 @@ uint32_t cluster_to_lba(uint32_t cluster) {
 
 void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name,
                           uint32_t parent_dir_cluster) {
+    struct FAT32DirectoryEntry empty = { 0 };
+    for (size_t i = 0; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
+        dir_table->table[i] = empty;
+    }
+
     for (size_t i = 0; i < 8; i++) {
         dir_table->table[0].name[i] = name[i];
     }
@@ -286,7 +291,8 @@ struct FAT32DirectoryEntry *dir_table_linear_search(char *name, char *ext, uint3
         for (int32_t i = 0; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
             // If we find a directory entry with matching name and ext, return its index
             if (memcmp(fat32_driver_state.dir_table_buf.table[i].name, name, 8) == 0 &&
-                memcmp(fat32_driver_state.dir_table_buf.table[i].ext, ext, 3) == 0) {
+                memcmp(fat32_driver_state.dir_table_buf.table[i].ext, ext, 3) == 0 &&
+                fat32_driver_state.dir_table_buf.table[i].user_attribute == UATTR_NOT_EMPTY) {
                 fat32_driver_state.linser_parent_number = parent_dir_cluster;
                 return fat32_driver_state.dir_table_buf.table + i;
             }
