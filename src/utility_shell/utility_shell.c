@@ -21,6 +21,21 @@ void puts(char* buf, uint8_t color) {
     syscall(5, (uint32_t) buf, strlen(buf), color);
 }
 
+void ls() {
+    syscall(7, (uint32_t) &cwd_table, cwd_cluster_number, 0);
+    
+    // Iterate through the directory table
+    for (int32_t i = 1; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
+        // If the entry is empty, skip
+        if (cwd_table.table[i].name[0] == 0x00)
+            continue;
+            
+        // Show its name
+        puts(cwd_table.table[i].name, BIOS_GREEN);
+        puts("\n", BIOS_GRAY);
+    }
+}
+
 void copy(char* src_name, char* src_ext, uint32_t src_parent_number, char* target_name, char* target_ext, uint32_t target_parent_number) {
     uint32_t src_size;
     bool is_dir = 0;
@@ -350,6 +365,7 @@ void executeCommand(char* buf) {
     }
     else if (strcmp(command, "ls")) {
         // panggil fungsi
+        ls();
     }
     else if (strcmp(command, "mkdir")) {
         // panggil fungsi
