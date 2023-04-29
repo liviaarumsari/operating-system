@@ -1,7 +1,7 @@
 # Operating System Course Project: sOS
 This repository contains the source code for a kernel as a completion for an Operating System Course Project.
 
-<img src="https://github.com/Sister20/if2230-2023-sos-k2/tree/main/assets/image1.png" width="752" />
+<img src="https://github.com/Sister20/if2230-2023-sos-k2/blob/main/assets/image1.png" width="752" />
 
 ## **Table of Contents**
 * [General Information](#general-information)
