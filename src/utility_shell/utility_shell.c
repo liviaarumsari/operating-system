@@ -758,6 +758,23 @@ void ls() {
 }
 
 void copy(char* src_name, char* src_ext, uint32_t src_parent_number, char* target_name, char* target_ext, uint32_t target_parent_number) {
+    struct ClusterBuffer cl = {0};
+    int8_t t_retcode;
+    struct FAT32DriverRequest t_request = {
+        .buf = &cl,
+        .name = "\0\0\0\0\0\0\0",
+        .ext = "\0\0",
+        .parent_cluster_number = target_parent_number,
+        .buffer_size = sizeof(struct FAT32DirectoryEntry)
+    };
+    memcpy(t_request.name, target_name, 8);
+    memcpy(t_request.ext, target_ext, 3);
+    syscall(1, (uint32_t)&t_request, (uint32_t)&t_retcode, 0);
+
+    if (t_retcode != 2) {
+        remove(target_name, target_ext, target_parent_number);
+    }
+
     uint32_t src_size;
     bool is_dir = 0;
     struct FAT32DirectoryTable src_table;
@@ -961,9 +978,6 @@ void cp(char* command) {
             puts(": is not a folder\n", BIOS_GRAY);
             return;
         } else {
-            if (retcode == 1)
-                syscall(3, (uint32_t)&request, (uint32_t)&retcode, 0);
-
             for (int16_t i = 1; i < n_words; i++) {
                 if (i == recursive || i == target_idx) continue;
                 char filename[12];
@@ -1034,7 +1048,7 @@ void rm(char* command) {
         .name = "\0\0\0\0\0\0\0",
         .ext = "\0\0",
         .parent_cluster_number = cwd_cluster_number,
-        .buffer_size = sizeof(struct FAT32DirectoryEntry)
+        .buffer_size = sizeof(struct FAT32DirectoryTable)
     };
 
     for (uint16_t i = 1; i < n_words; i++) {
