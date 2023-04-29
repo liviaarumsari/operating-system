@@ -6,7 +6,7 @@ SECTIONS {
     
     .text ALIGN(4):
     {
-        user-entry.o(.text)  /* Put user-entry at front of executable */
+        bin/user-entry.o(.text)  /* Put user-entry at front of executable */
         *(.text)
     }
 

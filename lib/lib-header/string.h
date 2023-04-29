@@ -9,6 +9,11 @@ int strlen(const char *str);
 // 1 if equal
 int strcmp(const char *str1, const char *str2);
 
+void addTrailingNull(char *str, uint16_t start, uint16_t end);
+
+// 0 if success, 1 if filename too long
+int parseFileName(char *filename, char *name, char *ext);
+
 int countWords(const char* str);
 
 int wordLen(const char* str, uint16_t idx);

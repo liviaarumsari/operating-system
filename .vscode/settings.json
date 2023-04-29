@@ -5,6 +5,8 @@
         "idt.h": "c",
         "framebuffer.h": "c",
         "stdtype.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "typeinfo": "c",
+        "string.h": "c"
     },
 }
