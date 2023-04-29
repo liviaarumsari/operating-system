@@ -9,6 +9,7 @@
 #define BIOS_GREEN 0x02
 #define BIOS_CYAN 0x03
 #define BIOS_GRAY 0x07
+#define BIOS_RED 0x0C
 
 extern char* current_directory;
 extern uint32_t cwd_cluster_number;

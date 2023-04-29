@@ -23,6 +23,44 @@ int strcmp(const char *str1, const char *str2) {
     return 1;
 }
 
+int strncmp(const char *str1, const char *str2, uint16_t n) {
+    uint16_t i = 0;
+    while (i < n && str1[i] != '\0' && str2[i] != '\0') {
+        if (str1[i] != str2[i])
+            return 0;
+        i++;
+    }
+    if (i < n && str1[i] != str2[i])
+        return 0;
+    return 1;
+}
+
+char *strtok(char *str, const char *delim) {
+    static char *next = ((void*)0);
+    if (str != ((void*)0))
+        next = str;
+
+    if (next == ((void*)0))
+        return ((void*)0);
+
+    char *ret = next;
+    int i = 0;
+    while (next[i] != '\0') {
+        int j = 0;
+        while (delim[j] != '\0') {
+            if (next[i] == delim[j]) {
+                next[i] = '\0';
+                next = next + i + 1;
+                return ret;
+            }
+            j++;
+        }
+        i++;
+    }
+    next = ((void*)0);
+    return ret;
+}
+
 void addTrailingNull(char *str, uint16_t start, uint16_t end) {
     for (uint16_t i = start; i < end; i++)
         str[i] = '\0';

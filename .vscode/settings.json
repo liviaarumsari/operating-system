@@ -7,6 +7,8 @@
         "stdtype.h": "c",
         "stdlib.h": "c",
         "typeinfo": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "stdmem.h": "c",
+        "utility_shell.h": "c"
     },
 }
