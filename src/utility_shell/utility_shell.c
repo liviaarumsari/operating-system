@@ -21,6 +21,41 @@ void puts(char* buf, uint8_t color) {
     syscall(5, (uint32_t) buf, strlen(buf), color);
 }
 
+void sleep(int microseconds) {
+    int j = 0;
+    for (int i=0; i < microseconds*1000; i++) {
+        j++;
+    }
+}
+
+void splashScreen() {
+    puts("\n\n\n                  ___\n", BIOS_YELLOW);
+    puts("                 (___)\n", BIOS_YELLOW);
+    puts("          ____\n", BIOS_CYAN);
+    puts("        _\\___ \\  |\\_/|\n", BIOS_CYAN);
+    puts("       \\     \\ \\/ , , \\\n", BIOS_CYAN);
+    puts("        \\__   \\ \\ =\"= //|||\\         Welcome to sOS Operating System!\n", BIOS_CYAN);
+    puts("         |===  \\/____)_)||||                    Made by:\n", BIOS_CYAN);
+    puts("         \\______|    | |||||          Angela Livia Arumsari 13521094\n", BIOS_CYAN);
+    puts("             _/_|  | | =====          Noel Christoffel Simbolon 13521096\n", BIOS_CYAN);
+    puts("            (_/  \\_)_)                Rinaldy Adin 13521134\n", BIOS_CYAN);
+    puts("         _________________            Enrique Alifio Ditya 13521142\n", BIOS_CYAN);
+    puts("        (                _)\n", BIOS_CYAN);
+    puts("         (__    sOS      )\n", BIOS_CYAN);
+    puts("           (___    _____)\n", BIOS_CYAN);
+    puts("               '--'\n", BIOS_CYAN);
+    puts("                                   LOADING . . .\n", BIOS_GREEN);
+
+    puts("        ", BIOS_BLUE);
+    for(int8_t i = 0; i < 60; i++) {
+        puts("#", BIOS_YELLOW);
+        sleep(10000);
+    }
+
+    sleep(100000);
+    syscall(6,0,0,0);
+}
+
 void cd(char* command) {
     // Get the path
     int8_t retcode;
