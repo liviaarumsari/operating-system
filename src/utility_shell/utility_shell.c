@@ -453,7 +453,7 @@ void executeCommand(char* buf) {
         rm(buf);
     }
     else if (strcmp(command, "mv")) {
-        // panggil fungsi
+        moveCommand(buf);
     }
     else if (strcmp(command, "whereis")) {
         whereisCommand(buf);
@@ -468,6 +468,11 @@ void executeCommand(char* buf) {
 }
 
 void whereisCommand(char* buf) {
+    if (countWords(buf) != 2) {
+        puts("Argument is invalid\n", BIOS_GRAY);
+        return;
+    }
+
     uint16_t n = wordLen(buf, 1);
     char searchName[n + 1];
     getWord(buf, 1, searchName);
@@ -481,42 +486,59 @@ void whereisCommand(char* buf) {
         puts(": filename invalid, name or extension may be too long\n", BIOS_GRAY);
         return;
     }
+    puts(searchName, BIOS_GRAY);
+    puts(":", BIOS_GRAY);
 
-    DFSsearch("root\0\0\0", ROOT_CLUSTER_NUMBER, name);
+    if (strcmp(name, "root\0\0\0")) {
+        puts("  root\n", BIOS_GRAY);
+        return;
+    }
+
+    int8_t isFileFound = 0;
+
+    DFSsearch(ROOT_CLUSTER_NUMBER, name, &isFileFound);
+    if (!isFileFound) {
+        puts(" file/folder is not found", BIOS_GRAY);
+    }
+    puts("\n", BIOS_GRAY);
 }
 
-void DFSsearch(char* folderName, uint32_t parentCluster, char* searchName) {
+void DFSsearch(uint32_t folderAddress, char* searchName, int8_t* isFound) {
+    // struct FAT32DirectoryTable dirtable;
+    // struct FAT32DriverRequest request = {
+    //     .buf                   = &dirtable,
+    //     .name                  = "",
+    //     .ext                   = "\0\0\0",
+    //     .parent_cluster_number = parentCluster,
+    //     .buffer_size           = CLUSTER_SIZE
+    // };
+    // memcpy(request.name, folderName, 8);
+    // int32_t retcode;
+    // syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
     struct FAT32DirectoryTable dirtable;
-    struct FAT32DriverRequest request = {
-        .buf                   = &dirtable,
-        .name                  = "",
-        .ext                   = "\0\0\0",
-        .parent_cluster_number = parentCluster,
-        .buffer_size           = CLUSTER_SIZE
-    };
-    memcpy(request.name, folderName, 8);
-    int32_t retcode;
-    syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
-    if (retcode == 0) {
-        size_t i = 1;
-        if (strcmp(searchName, "root\0\0\0") && parentCluster == 0x2) {
-            i = 0;
-        }
-        for (; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
-            uint32_t clusterAddress = (dirtable.table[i].cluster_high << 16) | dirtable.table[i].cluster_low;
-            if (strcmp(dirtable.table[i].name,searchName)) {
-                puts("root", BIOS_GRAY);
-                constructPath(clusterAddress);
-                if (dirtable.table[i].attribute != ATTR_SUBDIRECTORY && !strcmp(dirtable.table[i].ext, "\0\0\0")) {
+    syscall(7, (uint32_t) &dirtable, folderAddress, 0);
+    for (size_t i = 1; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
+        uint32_t clusterAddress = (dirtable.table[i].cluster_high << 16) | dirtable.table[i].cluster_low;
+        if (strcmp(dirtable.table[i].name,searchName)) {
+            *isFound = 1;
+            puts("  root", BIOS_GRAY);
+            if (dirtable.table[i].attribute != ATTR_SUBDIRECTORY) {
+                constructPath(folderAddress);
+                puts("/", BIOS_GRAY);
+                puts(dirtable.table[i].name, BIOS_GRAY);
+                if (!strcmp(dirtable.table[i].ext, "\0\0\0")) {
                     puts(".", BIOS_GRAY);
                     puts(dirtable.table[i].ext, BIOS_GRAY);
                 }
             }
-            if (dirtable.table[i].attribute == ATTR_SUBDIRECTORY) {
-                DFSsearch(dirtable.table[i].name, clusterAddress, searchName);
+            else {
+                constructPath(clusterAddress);
             }
-        }  
-    }
+        }
+        if (dirtable.table[i].attribute == ATTR_SUBDIRECTORY) {
+            DFSsearch(clusterAddress, searchName, isFound);
+        }
+    }  
 }
 
 void constructPath(uint32_t clusterAddress) {
@@ -529,4 +551,43 @@ void constructPath(uint32_t clusterAddress) {
         puts(dirtable.table[0].name, BIOS_GRAY);
     }
     
+}
+
+void moveCommand(char* buf){
+    if (countWords(buf) != 3) {
+        puts("Argument is invalid\n", BIOS_GRAY);
+        return;
+    }
+
+    // Get first argument
+    int16_t n_param1 = wordLen(buf, 1);
+    char param1[n_param1 + 1];
+    getWord(buf, 1, param1);
+
+    // Get second argument
+    int16_t n_param2 = wordLen(buf, 2);
+    char param2[n_param2 + 1];
+    getWord(buf, 2, param2);
+
+    // Remove command
+    char removeCommand[n_param1 + 4];
+    removeCommand[0] = 'r';
+    removeCommand[1] = 'm';
+    removeCommand[2] = ' ';
+    for (int16_t i = 0; i <= n_param1; i++) {
+        removeCommand[3+i] = param1[i];
+    }
+
+    // Copy command
+    char copyCommand[n_param1 + n_param2 + 5];
+    memcpy(copyCommand, removeCommand, n_param1 + 3);
+    copyCommand[0] = 'c';
+    copyCommand[1] = 'p';
+    copyCommand[n_param1+3] = ' ';
+    for (int16_t i = 0; i <= n_param2; i++) {
+        copyCommand[n_param1 +4+i] = param2[i];
+    }
+
+    cp(copyCommand);
+    rm(removeCommand);
 }
