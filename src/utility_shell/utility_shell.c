@@ -547,3 +547,42 @@ void constructPath(uint32_t clusterAddress) {
     }
     
 }
+
+void moveCommand(char* buf){
+    if (countWords(buf) != 3) {
+        puts("Argument is invalid\n", BIOS_GRAY);
+        return;
+    }
+
+    // Get first argument
+    int16_t n_param1 = wordLen(buf, 1);
+    char param1[n_param1 + 1];
+    getWord(buf, 1, param1);
+
+    // Get second argument
+    int16_t n_param2 = wordLen(buf, 2);
+    char param2[n_param2 + 1];
+    getWord(buf, 2, param2);
+
+    // Remove command
+    char removeCommand[n_param1 + 4];
+    removeCommand[0] = 'r';
+    removeCommand[1] = 'm';
+    removeCommand[2] = ' ';
+    for (int16_t i = 0; i <= n_param1; i++) {
+        removeCommand[3+i] = param1[i];
+    }
+
+    // Copy command
+    char copyCommand[n_param1 + n_param2 + 5];
+    memcpy(copyCommand, removeCommand, n_param1 + 3);
+    copyCommand[0] = 'c';
+    copyCommand[1] = 'p';
+    copyCommand[n_param1+3] = ' ';
+    for (int16_t i = 0; i <= n_param2; i++) {
+        copyCommand[n_param1 +4+i] = param2[i];
+    }
+
+    cp(copyCommand);
+    rm(removeCommand);
+}

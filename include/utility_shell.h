@@ -48,4 +48,6 @@ void DFSsearch(uint32_t folderAddress, char* searchName, int8_t* isFound);
 
 void constructPath(uint32_t clusterAddress);
 
+void moveCommand(char* buf);
+
 #endif
