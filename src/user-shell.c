@@ -11,7 +11,7 @@ int main(void) {
         puts("sOS@OS-IF2230", BIOS_GREEN);
         puts(":", BIOS_GRAY);
         puts(current_directory, BIOS_BLUE);
-        puts("$", BIOS_GRAY);
+        puts("$ ", BIOS_GRAY);
         syscall(4, (uint32_t) buf, 256, 0);
         executeCommand(buf);
     }

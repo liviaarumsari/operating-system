@@ -29,10 +29,17 @@ void ls() {
         // If the entry is empty, skip
         if (cwd_table.table[i].name[0] == 0x00)
             continue;
-            
-        // Show its name
-        puts(cwd_table.table[i].name, BIOS_GREEN);
-        puts("\n", BIOS_GRAY);
+
+        // If its a folder
+        if (cwd_table.table[i].attribute == ATTR_SUBDIRECTORY) {
+            puts(cwd_table.table[i].name, BIOS_GREEN);
+            puts("/", BIOS_GREEN);
+            puts("\n", BIOS_GRAY);
+        } else {
+            // If its a file
+            puts(cwd_table.table[i].name, BIOS_GREEN);
+            puts("\n", BIOS_GRAY);
+        }
     }
 }
 
