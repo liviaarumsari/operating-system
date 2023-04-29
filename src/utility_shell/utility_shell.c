@@ -25,20 +25,25 @@ void copy(char* src_name, char* src_ext, uint32_t src_parent_number, char* targe
     uint32_t src_size;
     bool is_dir = 0;
     struct FAT32DirectoryTable src_table;
-    syscall(7, (uint32_t)&src_table, src_parent_number, 0);
+    uint32_t src_cluster_number;
+    struct FAT32DirectoryTable src_parent_table;
+    syscall(7, (uint32_t)&src_parent_table, src_parent_number, 0);
     
     for (int32_t i = 0; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
-        if (memcmp(src_table.table[i].name, src_name, 8) == 0 &&
-            memcmp(src_table.table[i].ext, src_ext, 3) == 0) {
-            src_size = src_table.table[i].filesize;
-            is_dir = src_table.table[i].attribute == ATTR_SUBDIRECTORY;
+        if (memcmp(src_parent_table.table[i].name, src_name, 8) == 0 &&
+            memcmp(src_parent_table.table[i].ext, src_ext, 3) == 0) {
+            src_size = src_parent_table.table[i].filesize;
+            src_cluster_number = (src_parent_table.table[i].cluster_high << 16) | src_parent_table.table[i].cluster_low;
+            is_dir = src_parent_table.table[i].attribute == ATTR_SUBDIRECTORY;
+            if (is_dir)
+                src_size = sizeof(struct FAT32DirectoryTable);
             break;
         }
     }
     
     struct ClusterBuffer data_buf[(src_size + CLUSTER_SIZE - 1) / CLUSTER_SIZE];
     struct FAT32DriverRequest request = {
-        .buf = data_buf,
+        .buf = &data_buf,
         .name = "",
         .ext = "",
         .buffer_size = src_size,
@@ -48,15 +53,44 @@ void copy(char* src_name, char* src_ext, uint32_t src_parent_number, char* targe
     memcpy(request.ext, src_ext, 3);
 
     int8_t retcode;
-    if (is_dir)
+    if (is_dir) {
+        request.buf = &src_table;
         syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
-    else
+    } else
         syscall(0, (uint32_t)&request, (uint32_t)&retcode, 0);
 
-    memcpy(request.name, target_name, 8);
-    memcpy(request.ext, target_ext, 3);
-    request.parent_cluster_number = target_parent_number;
-    syscall(2, (uint32_t)&request, (uint32_t)&retcode, 0);
+    if (is_dir) {
+        memcpy(request.name, target_name, 8);
+        memcpy(request.ext, target_ext, 3);
+        request.parent_cluster_number = target_parent_number;
+        request.buffer_size = 0;
+        syscall(2, (uint32_t)&request, (uint32_t)&retcode, 0);
+
+        uint32_t target_cluster_number;
+        struct FAT32DirectoryTable target_parent_table;
+
+        syscall(7, (uint32_t)&target_parent_table, target_parent_number, 0);
+
+        for (int32_t i = 0; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
+            if (memcmp(target_parent_table.table[i].name, target_name, 8) == 0 &&
+                memcmp(target_parent_table.table[i].ext, target_ext, 3) == 0 &&
+                target_parent_table.table[i].user_attribute == UATTR_NOT_EMPTY) {
+                target_cluster_number = (target_parent_table.table[i].cluster_high << 16) | target_parent_table.table[i].cluster_low;
+            }
+        }
+
+        for (int32_t i = 1; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
+            if (src_table.table[i].user_attribute == UATTR_NOT_EMPTY) {
+                copy(src_table.table[i].name, src_table.table[i].ext, src_cluster_number, src_table.table[i].name, src_table.table[i].ext, target_cluster_number);
+            }
+        }
+    } else {
+        memcpy(request.name, target_name, 8);
+        memcpy(request.ext, target_ext, 3);
+        request.parent_cluster_number = target_parent_number;
+        syscall(2, (uint32_t)&request, (uint32_t)&retcode, 0);
+    }
+
     if (retcode != 0)
         puts("Error writing to file", BIOS_GRAY);
 }
@@ -88,9 +122,15 @@ void cp(char* command) {
         return;
     }
 
+    uint16_t target_idx;
+    if (recursive == n_words - 1)
+        target_idx = n_words - 2;
+    else
+        target_idx = n_words - 1;
+
     // check if all source exists
     for (uint16_t i = 1; i < n_words - 1; i++) {
-        // uint16_t n = wordLen(command, i);
+        if (recursive == i || target_idx == i) continue;
         char filename[12];
         getWord(command, i, filename);
 
@@ -119,11 +159,6 @@ void cp(char* command) {
         }
     }
 
-    uint16_t target_idx;
-    if (recursive == n_words - 1)
-        target_idx = n_words - 2;
-    else
-        target_idx = n_words - 1;
     uint16_t target_n = wordLen(command, target_idx);
     char target_filename[target_n + 1];
     getWord(command, target_idx, target_filename);
