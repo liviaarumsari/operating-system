@@ -1,4 +1,5 @@
 #include "../lib-header/string.h"
+#include "../lib-header/stdmem.h"
 
 int strlen(const char *str)
 {
@@ -21,6 +22,52 @@ int strcmp(const char *str1, const char *str2) {
     if (str1[i] != str2[i])
         return 0;
     return 1;
+}
+
+int strncmp(const char *str1, const char *str2, uint16_t n) {
+    uint16_t i = 0;
+    while (i < n && str1[i] != '\0' && str2[i] != '\0') {
+        if (str1[i] != str2[i])
+            return 0;
+        i++;
+    }
+    if (i < n && str1[i] != str2[i])
+        return 0;
+    return 1;
+}
+
+char *strtok(char *str, const char *delim) {
+    static char *last_token = NULL;
+    char *tmp;
+    const char *tmp_delim;
+
+    if (str != NULL) {
+        last_token = str;
+    }
+
+    if (last_token == NULL) {
+        return NULL;
+    }
+
+    char* ret;
+    tmp_delim = delim;
+    while (*tmp_delim != '\0') {
+        tmp = last_token;
+        while (*tmp != '\0') {
+            if (*tmp == *tmp_delim) {
+                *tmp = '\0';
+                ret = last_token;
+                last_token = tmp + 1;
+                return ret;
+            }
+            tmp++;
+        }
+        tmp_delim++;
+    }
+
+    tmp = last_token;
+    last_token = NULL;
+    return tmp;
 }
 
 void addTrailingNull(char *str, uint16_t start, uint16_t end) {

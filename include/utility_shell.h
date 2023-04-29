@@ -5,20 +5,49 @@
 #include "../lib/lib-header/stdmem.h"
 #include "fat32.h"
 
-#define BIOS_BLUE 0x01
+#define BIOS_BLUE 0x09
 #define BIOS_GREEN 0x02
-#define BIOS_CYAN 0x03
+#define BIOS_CYAN 0x0B
 #define BIOS_GRAY 0x07
+#define BIOS_RED 0x0C
+#define BIOS_MAGENTA 0x0D
+#define BIOS_YELLOW 0x0E
 
-extern char* current_directory;
+extern char current_directory[];
 extern uint32_t cwd_cluster_number;
 extern struct FAT32DirectoryTable cwd_table;
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
 
+/**
+ * @brief Display buf in framebuffer
+ * 
+ * @param buf 
+ * @param color bg and fg color 
+ */
 void puts(char* buf, uint8_t color);
 
-void copy(char* src_name, char* src_ext, uint32_t src_cluster_number, char* target_name, char* target_ext, uint32_t target_cluster_number);
+/**
+ * @brief Sleep system implementation by for loop doing nothing
+ * 
+ * @param microseconds time of sleep
+ */
+void sleep(int microseconds);
+
+/**
+ * @brief Display splashscreen in framebuffer
+ * 
+ */
+void splashScreen();
+
+/**
+ * @brief Execute matching command with user input
+ * 
+ * @param buf user input
+ */
+void executeCommand(char* buf);
+
+void copy(char* src_name, char* src_ext, uint32_t src_parent_number, char* target_name, char* target_ext, uint32_t target_parent_number);
 
 /**
  * If source has folder but no -r flag: ERROR
@@ -35,12 +64,38 @@ void copy(char* src_name, char* src_ext, uint32_t src_cluster_number, char* targ
 */
 void cp(char* command);
 
-void executeCommand(char* buf);
+void remove(char* name, char* ext, uint32_t parent_number);
 
+void rm(char* command);
+
+/**
+ * @brief DFS search implementation for file structure. Display path in framebuffer if found.
+ * 
+ * @param folderAddress folder address cluster to be searched
+ * @param searchName name of file/folder
+ * @param isFound 0 if file/folder isn't found, 1 if found
+ */
+void DFSsearch(uint32_t folderAddress, char* searchName, int8_t* isFound);
+
+/**
+ * @brief construct path from root to folder
+ * 
+ * @param clusterAddress cluster address of folder
+ */
+void constructPath(uint32_t clusterAddress);
+
+/**
+ * @brief Search path of file/folder with the same name. Only accept 1 argument of file/folder name.
+ * 
+ * @param buf user input
+ */
 void whereisCommand(char* buf);
 
-void DFSsearch(char* folderName, uint32_t parentCluster, char* searchName);
-
-void constructPath(uint32_t clusterAddress);
+/**
+ * @brief Move and rename file/folder
+ * 
+ * @param buf user input
+ */
+void moveCommand(char* buf);
 
 #endif

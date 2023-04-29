@@ -4,10 +4,16 @@
 
 #include "stdtype.h"
 
+#define NULL ((void*)0)
+
 int strlen(const char *str);
 
 // 1 if equal
 int strcmp(const char *str1, const char *str2);
+
+int strncmp(const char *str1, const char *str2, uint16_t n);
+
+char *strtok(char *str, const char *delim);
 
 void addTrailingNull(char *str, uint16_t start, uint16_t end);
 

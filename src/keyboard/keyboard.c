@@ -77,7 +77,7 @@ void keyboard_isr(void) {
             // keyboard_state.buffer_index = 0;
         // Handle backspace character
         } else if (mapped_char == '\b') {
-            if (BUFFER_COUNT > 0) {    
+            if (BUFFER_COUNT > 0 && keyboard_state.buffer_index > 0) {    
                     // Remove character from buffer
                     keyboard_state.buffer_index--;
                     keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = 0;
@@ -98,7 +98,7 @@ void keyboard_isr(void) {
                     }
                     framebuffer_clear_char(row, col);
                     framebuffer_set_cursor(row, col);
-            } else {
+            } else if (BUFFER_COUNT == 0){
                 framebuffer_set_cursor(0, 0);
             }
         // Handle printable character
