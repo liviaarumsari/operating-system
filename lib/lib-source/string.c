@@ -168,3 +168,38 @@ void getWord(const char* str, uint16_t idx, char* buf) {
     }
     buf[n] = '\0';
 }
+
+char* custom_strtok(char* str, const char* delim) {
+    static char* saved_str = NULL;
+    char* token;
+
+    if (str != NULL) {
+        saved_str = str;
+    }
+
+    token = saved_str;
+    while (*saved_str != '\0') {
+        const char* d = delim;
+        while (*d != '\0') {
+            if (*saved_str == *d) {
+                *saved_str = '\0';
+                saved_str++;
+                if (*token != '\0') {
+                    return token;
+                } else {
+                    token = saved_str;
+                    break;
+                }
+            }
+            d++;
+        }
+        saved_str++;
+    }
+
+    if (*token == '\0') {
+        return NULL;
+    } else {
+        saved_str = NULL;
+        return token;
+    }
+}
