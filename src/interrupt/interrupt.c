@@ -130,5 +130,8 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
         char *name = (char *)cpu.ecx;
         char *ext = (char *)cpu.ecx + 8;
         *((struct FAT32DirectoryEntry*)cpu.ebx) = *(dir_table_linear_search(name, ext, cpu.edx));
+    }  else if (cpu.eax == 9) {
+        struct FAT32DriverRequest request = *(struct FAT32DriverRequest*)cpu.ebx;
+        *((int8_t*)cpu.ecx) = findClusterNumber(request);
     }
 }
