@@ -1,4 +1,5 @@
 #include "../lib-header/string.h"
+#include "../lib-header/stdmem.h"
 
 int strlen(const char *str)
 {
@@ -36,29 +37,32 @@ int strncmp(const char *str1, const char *str2, uint16_t n) {
 }
 
 char *strtok(char *str, const char *delim) {
-    static char *next = ((void*)0);
-    if (str != ((void*)0))
-        next = str;
-
-    if (next == ((void*)0))
-        return ((void*)0);
-
-    char *ret = next;
-    int i = 0;
-    while (next[i] != '\0') {
-        int j = 0;
-        while (delim[j] != '\0') {
-            if (next[i] == delim[j]) {
-                next[i] = '\0';
-                next = next + i + 1;
-                return ret;
-            }
-            j++;
-        }
-        i++;
+    static char *p = NULL;
+    if (str != NULL) {
+        memcpy(p, str, strlen(str) + 1);
+    } else if (p == NULL) {
+        return NULL;
     }
-    next = ((void*)0);
-    return ret;
+
+    char *start = p;
+
+    while (*p != '\0') {
+        const char *d = delim;
+        while (*d != '\0') {
+            if (*p == *d) {
+                *p = '\0';
+                p++;
+                if (start == p) {
+                    start++;
+                    continue;
+                }
+                return start;
+            }
+            d++;
+        }
+        p++;
+    }
+    return start == p ? NULL : start;
 }
 
 void addTrailingNull(char *str, uint16_t start, uint16_t end) {

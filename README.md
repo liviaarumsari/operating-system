@@ -1,6 +1,8 @@
 # Operating System Course Project: sOS
 This repository contains the source code for a kernel as a completion for an Operating System Course Project.
 
+<img src="https://github.com/Sister20/if2230-2023-sos-k2/blob/main/assets/image1.png" width="752" />
+
 ## **Table of Contents**
 * [General Information](#general-information)
 * [Milestone](#milestone)
@@ -23,7 +25,10 @@ This repository contains code to build an operating system in x86 32 bit archite
 * Interrupt
 * Keyboard device driver
 * File system
-
+### **Milestone 3**
+* Paging
+* User Mode
+* Shell: implemented cp and rm for folder
 
 ## **Requirements**
 To use this program, you will need to install these programs:
@@ -49,14 +54,17 @@ You can directly use VSCode to run and debug or follow these steps
 ```sh 
 make disk
 ```
-3. Run the application using this command
+3. Insert user program to the system by this command
+```sh 
+make insert-shell
+```
+4. Run the application using this command
 ```sh 
 make run
 ```
 
 ## **Program Structure**
 ```
-.
 │   makefile
 │   README.md
 │
@@ -77,25 +85,33 @@ make run
 │       interrupt.h
 │       kernel_loader.h
 │       keyboard.h
+│       paging.h
+│       utility_shell.h
 │
 ├───lib
 │   ├───lib-header
 │   │       portio.h
 │   │       stdmem.h
 │   │       stdtype.h
+│   │       string.h
 │   │
 │   └───lib-source
 │           portio.c
 │           stdmem.c
+│           string.c
 │
 ├───other
 │       grub1
 │
 └───src
+    │   init_storage.c
     │   kernel.c
     │   kernel_loader.s
     │   linker.ld
     │   menu.lst
+    │   user-entry.s
+    │   user-linker.ld
+    │   user-shell.c
     │
     ├───filesystem
     │       disk.c
@@ -107,13 +123,22 @@ make run
     ├───GDT
     │       gdt.c
     │
+    ├───inserter
+    │       external-inserter.c
+    │
     ├───interrupt
     │       idt.c
     │       interrupt.c
     │       intsetup.s
     │
-    └───keyboard
-            keyboard.c
+    ├───keyboard
+    │       keyboard.c
+    │
+    ├───paging
+    │       paging.c
+    │
+    └───utility_shell
+            utility_shell.c
 
 ```
 

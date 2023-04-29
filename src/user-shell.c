@@ -4,9 +4,10 @@
 
 int main(void) {
     char buf[256];
-
+    splashScreen();
     while (TRUE) {
         syscall(7, (uint32_t)&cwd_table, (uint32_t)cwd_cluster_number, 0);
+        memcpy(current_directory, cwd_table.table[0].name, 8);
 
         puts("sOS@OS-IF2230", BIOS_GREEN);
         puts(":", BIOS_GRAY);

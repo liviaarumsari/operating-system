@@ -3,7 +3,7 @@
 #include "../../lib/lib-header/string.h"
 #include "../../lib/lib-header/stdmem.h"
 
-char* current_directory = "/";
+char current_directory[9] = "/\0\0\0\0\0\0\0";
 uint32_t cwd_cluster_number = 2;
 struct FAT32DirectoryTable cwd_table;
 
@@ -621,67 +621,103 @@ void cat(char* filePath) {
             currentClusterNumber = childClusterNumber;
         }
     }
+
+void sleep(int microseconds) {
+    int j = 0;
+    for (int i=0; i < microseconds*1000; i++) {
+        j++;
+    }
+}
+
+void splashScreen() {
+    puts("\n\n\n                  ___\n", BIOS_YELLOW);
+    puts("                 (___)\n", BIOS_YELLOW);
+    puts("          ____\n", BIOS_CYAN);
+    puts("        _\\___ \\  |\\_/|\n", BIOS_CYAN);
+    puts("       \\     \\ \\/ , , \\\n", BIOS_CYAN);
+    puts("        \\__   \\ \\ =\"= //|||\\         Welcome to sOS Operating System!\n", BIOS_CYAN);
+    puts("         |===  \\/____)_)||||                    Made by:\n", BIOS_CYAN);
+    puts("         \\______|    | |||||          Angela Livia Arumsari 13521094\n", BIOS_CYAN);
+    puts("             _/_|  | | =====          Noel Christoffel Simbolon 13521096\n", BIOS_CYAN);
+    puts("            (_/  \\_)_)                Rinaldy Adin 13521134\n", BIOS_CYAN);
+    puts("         _________________            Enrique Alifio Ditya 13521142\n", BIOS_CYAN);
+    puts("        (                _)\n", BIOS_CYAN);
+    puts("         (__    sOS      )\n", BIOS_CYAN);
+    puts("           (___    _____)\n", BIOS_CYAN);
+    puts("               '--'\n", BIOS_CYAN);
+    puts("                                   LOADING . . .\n", BIOS_GREEN);
+
+    puts("        ", BIOS_BLUE);
+    for(int8_t i = 0; i < 60; i++) {
+        puts("#", BIOS_YELLOW);
+        sleep(10000);
+    }
+
+    sleep(100000);
+    syscall(6,0,0,0);
 }
 
 void cd(char* command) {
     // Get the path
+    int8_t retcode;
     int n_word = wordLen(command, 1);
     char path[n_word+1];
     getWord(command, 1, path);
 
     // If the path is empty, set the current directory to root
     if (strlen(path) == 0) {
-        current_directory = "/";
         cwd_cluster_number = 2;
         return;
     }
 
-    // If the path is not empty, check if the path is valid
+    // Check if the path is valid
     struct FAT32DirectoryTable table;
     uint32_t cluster_number = cwd_cluster_number;
     char* token = strtok(path, "/");
-    while (token != ((void*)0)) {
+    if (token == NULL) {
+        token = path;
+    }
+
+    struct FAT32DriverRequest request = {
+        .buf = &table,
+        .name = "\0\0\0\0\0\0\0",
+        .ext = "\0\0",
+        .buffer_size = sizeof(struct FAT32DirectoryTable),
+        .parent_cluster_number = cwd_cluster_number
+    };
+
+    // Iterate through the path
+    while (token != NULL) {
+        // For debug: check token
+        puts("Token: ", BIOS_GRAY);
+        puts(token, BIOS_GRAY);
+        puts("\n", BIOS_GRAY);
+        addTrailingNull(token, strlen(token), 8);
+        memcpy(request.name, token, 8);
+        request.parent_cluster_number = cluster_number;
+
         // Read the directory table
-        syscall(7, (uint32_t) &table, cluster_number, 0);
-
-        // Iterate through the directory table
-        bool found = 0;
-        for (int32_t i = 1; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
-            // If the entry is empty, skip
-            if (table.table[i].name[0] == 0x00)
-                continue;
-
-            // If the entry is a folder
-            if (table.table[i].attribute == ATTR_SUBDIRECTORY) {
-                // If the entry name is the same as the token
-                if (strncmp(table.table[i].name, token, 11) == 0) {
-                    // Set the cluster number to the entry cluster number
-                    cluster_number = table.table[i].cluster_low;
-                    found = 1;
-                    break;
-                }
-            } else if (strncmp(table.table[i].name, token, 11) == 0) {
-                // If the entry is a file, put error message and return
-                puts(token, BIOS_RED);
-                puts(": Not a directory\n", BIOS_GRAY);
-                found = 1;
-                return;
-            }
-        }
+        syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
 
         // If the token is not found, put error message and return
-        if (!found) {
+        if (retcode != 0) {
             puts(token, BIOS_RED);
-            puts(": No such file or directory\n", BIOS_GRAY);
+            puts(": No such directory\n", BIOS_GRAY);
             return;
         }
 
+        struct FAT32DirectoryEntry entry;
+        char reqstr[11];
+        memcpy(reqstr, token, 8);
+        memcpy(reqstr + 8, "\0\0\0", 3);
+        syscall(8, (uint32_t)&entry, (uint32_t)reqstr, cluster_number);
+        cluster_number = (entry.cluster_high << 16) | entry.cluster_low;
+
         // Get the next token
-        token = strtok(((void*)0), "/");
+        token = strtok(NULL, "/");
     }
 
     // If the path is valid, set the current directory to the path
-    current_directory = path;
     cwd_cluster_number = cluster_number;
 }
 
@@ -1070,7 +1106,7 @@ void executeCommand(char* buf) {
         rm(buf);
     }
     else if (strcmp(command, "mv")) {
-        // panggil fungsi
+        moveCommand(buf);
     }
     else if (strcmp(command, "whereis")) {
         whereisCommand(buf);
@@ -1085,6 +1121,11 @@ void executeCommand(char* buf) {
 }
 
 void whereisCommand(char* buf) {
+    if (countWords(buf) != 2) {
+        puts("Argument is invalid\n", BIOS_GRAY);
+        return;
+    }
+
     uint16_t n = wordLen(buf, 1);
     char searchName[n + 1];
     getWord(buf, 1, searchName);
@@ -1098,42 +1139,59 @@ void whereisCommand(char* buf) {
         puts(": filename invalid, name or extension may be too long\n", BIOS_GRAY);
         return;
     }
+    puts(searchName, BIOS_GRAY);
+    puts(":", BIOS_GRAY);
 
-    DFSsearch("root\0\0\0", ROOT_CLUSTER_NUMBER, name);
+    if (strcmp(name, "root\0\0\0")) {
+        puts("  root\n", BIOS_GRAY);
+        return;
+    }
+
+    int8_t isFileFound = 0;
+
+    DFSsearch(ROOT_CLUSTER_NUMBER, name, &isFileFound);
+    if (!isFileFound) {
+        puts(" file/folder is not found", BIOS_GRAY);
+    }
+    puts("\n", BIOS_GRAY);
 }
 
-void DFSsearch(char* folderName, uint32_t parentCluster, char* searchName) {
+void DFSsearch(uint32_t folderAddress, char* searchName, int8_t* isFound) {
+    // struct FAT32DirectoryTable dirtable;
+    // struct FAT32DriverRequest request = {
+    //     .buf                   = &dirtable,
+    //     .name                  = "",
+    //     .ext                   = "\0\0\0",
+    //     .parent_cluster_number = parentCluster,
+    //     .buffer_size           = CLUSTER_SIZE
+    // };
+    // memcpy(request.name, folderName, 8);
+    // int32_t retcode;
+    // syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
     struct FAT32DirectoryTable dirtable;
-    struct FAT32DriverRequest request = {
-        .buf                   = &dirtable,
-        .name                  = "",
-        .ext                   = "\0\0\0",
-        .parent_cluster_number = parentCluster,
-        .buffer_size           = CLUSTER_SIZE
-    };
-    memcpy(request.name, folderName, 8);
-    int32_t retcode;
-    syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
-    if (retcode == 0) {
-        size_t i = 1;
-        if (strcmp(searchName, "root\0\0\0") && parentCluster == 0x2) {
-            i = 0;
-        }
-        for (; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
-            uint32_t clusterAddress = (dirtable.table[i].cluster_high << 16) | dirtable.table[i].cluster_low;
-            if (strcmp(dirtable.table[i].name,searchName)) {
-                puts("root", BIOS_GRAY);
-                constructPath(clusterAddress);
-                if (dirtable.table[i].attribute != ATTR_SUBDIRECTORY && !strcmp(dirtable.table[i].ext, "\0\0\0")) {
+    syscall(7, (uint32_t) &dirtable, folderAddress, 0);
+    for (size_t i = 1; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
+        uint32_t clusterAddress = (dirtable.table[i].cluster_high << 16) | dirtable.table[i].cluster_low;
+        if (strcmp(dirtable.table[i].name,searchName)) {
+            *isFound = 1;
+            puts("  root", BIOS_GRAY);
+            if (dirtable.table[i].attribute != ATTR_SUBDIRECTORY) {
+                constructPath(folderAddress);
+                puts("/", BIOS_GRAY);
+                puts(dirtable.table[i].name, BIOS_GRAY);
+                if (!strcmp(dirtable.table[i].ext, "\0\0\0")) {
                     puts(".", BIOS_GRAY);
                     puts(dirtable.table[i].ext, BIOS_GRAY);
                 }
             }
-            if (dirtable.table[i].attribute == ATTR_SUBDIRECTORY) {
-                DFSsearch(dirtable.table[i].name, clusterAddress, searchName);
+            else {
+                constructPath(clusterAddress);
             }
-        }  
-    }
+        }
+        if (dirtable.table[i].attribute == ATTR_SUBDIRECTORY) {
+            DFSsearch(clusterAddress, searchName, isFound);
+        }
+    }  
 }
 
 void constructPath(uint32_t clusterAddress) {
@@ -1146,4 +1204,43 @@ void constructPath(uint32_t clusterAddress) {
         puts(dirtable.table[0].name, BIOS_GRAY);
     }
     
+}
+
+void moveCommand(char* buf){
+    if (countWords(buf) != 3) {
+        puts("Argument is invalid\n", BIOS_GRAY);
+        return;
+    }
+
+    // Get first argument
+    int16_t n_param1 = wordLen(buf, 1);
+    char param1[n_param1 + 1];
+    getWord(buf, 1, param1);
+
+    // Get second argument
+    int16_t n_param2 = wordLen(buf, 2);
+    char param2[n_param2 + 1];
+    getWord(buf, 2, param2);
+
+    // Remove command
+    char removeCommand[n_param1 + 4];
+    removeCommand[0] = 'r';
+    removeCommand[1] = 'm';
+    removeCommand[2] = ' ';
+    for (int16_t i = 0; i <= n_param1; i++) {
+        removeCommand[3+i] = param1[i];
+    }
+
+    // Copy command
+    char copyCommand[n_param1 + n_param2 + 5];
+    memcpy(copyCommand, removeCommand, n_param1 + 3);
+    copyCommand[0] = 'c';
+    copyCommand[1] = 'p';
+    copyCommand[n_param1+3] = ' ';
+    for (int16_t i = 0; i <= n_param2; i++) {
+        copyCommand[n_param1 +4+i] = param2[i];
+    }
+
+    cp(copyCommand);
+    rm(removeCommand);
 }
