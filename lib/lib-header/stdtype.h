@@ -43,9 +43,4 @@ typedef uint8_t bool;
 #define TRUE 1
 #define FALSE 0
 
-/**
- * NULL definition
-*/
-#define NULL ((void*) 0)
-
 #endif
