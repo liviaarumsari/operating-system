@@ -37,32 +37,37 @@ int strncmp(const char *str1, const char *str2, uint16_t n) {
 }
 
 char *strtok(char *str, const char *delim) {
-    static char *p = NULL;
+    static char *last_token = NULL;
+    char *tmp;
+    const char *tmp_delim;
+
     if (str != NULL) {
-        memcpy(p, str, strlen(str) + 1);
-    } else if (p == NULL) {
+        last_token = str;
+    }
+
+    if (last_token == NULL) {
         return NULL;
     }
 
-    char *start = p;
-
-    while (*p != '\0') {
-        const char *d = delim;
-        while (*d != '\0') {
-            if (*p == *d) {
-                *p = '\0';
-                p++;
-                if (start == p) {
-                    start++;
-                    continue;
-                }
-                return start;
+    char* ret;
+    tmp_delim = delim;
+    while (*tmp_delim != '\0') {
+        tmp = last_token;
+        while (*tmp != '\0') {
+            if (*tmp == *tmp_delim) {
+                *tmp = '\0';
+                ret = last_token;
+                last_token = tmp + 1;
+                return ret;
             }
-            d++;
+            tmp++;
         }
-        p++;
+        tmp_delim++;
     }
-    return start == p ? NULL : start;
+
+    tmp = last_token;
+    last_token = NULL;
+    return tmp;
 }
 
 void addTrailingNull(char *str, uint16_t start, uint16_t end) {

@@ -8,6 +8,9 @@ int main(void) {
     while (TRUE) {
         syscall(7, (uint32_t)&cwd_table, (uint32_t)cwd_cluster_number, 0);
         memcpy(current_directory, cwd_table.table[0].name, 8);
+        if (cwd_cluster_number == 2) {
+            memcpy(current_directory, "/\0\0\0\0\0\0\0", 8);
+        }
 
         puts("sOS@OS-IF2230", BIOS_GREEN);
         puts(":", BIOS_GRAY);
