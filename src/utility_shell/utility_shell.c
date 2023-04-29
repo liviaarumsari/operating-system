@@ -448,7 +448,7 @@ void executeCommand(char* buf) {
         rm(buf);
     }
     else if (strcmp(command, "mv")) {
-        // panggil fungsi
+        moveCommand(buf);
     }
     else if (strcmp(command, "whereis")) {
         whereisCommand(buf);
@@ -463,6 +463,11 @@ void executeCommand(char* buf) {
 }
 
 void whereisCommand(char* buf) {
+    if (countWords(buf) != 2) {
+        puts("Argument is invalid\n", BIOS_GRAY);
+        return;
+    }
+
     uint16_t n = wordLen(buf, 1);
     char searchName[n + 1];
     getWord(buf, 1, searchName);
@@ -479,47 +484,56 @@ void whereisCommand(char* buf) {
     puts(searchName, BIOS_GRAY);
     puts(":", BIOS_GRAY);
 
+    if (strcmp(name, "root\0\0\0")) {
+        puts("  root\n", BIOS_GRAY);
+        return;
+    }
+
     int8_t isFileFound = 0;
-    DFSsearch("root\0\0\0", ROOT_CLUSTER_NUMBER, name, &isFileFound);
+
+    DFSsearch(ROOT_CLUSTER_NUMBER, name, &isFileFound);
     if (!isFileFound) {
         puts(" file/folder is not found", BIOS_GRAY);
     }
     puts("\n", BIOS_GRAY);
 }
 
-void DFSsearch(char* folderName, uint32_t parentCluster, char* searchName, int8_t* isFound) {
+void DFSsearch(uint32_t folderAddress, char* searchName, int8_t* isFound) {
+    // struct FAT32DirectoryTable dirtable;
+    // struct FAT32DriverRequest request = {
+    //     .buf                   = &dirtable,
+    //     .name                  = "",
+    //     .ext                   = "\0\0\0",
+    //     .parent_cluster_number = parentCluster,
+    //     .buffer_size           = CLUSTER_SIZE
+    // };
+    // memcpy(request.name, folderName, 8);
+    // int32_t retcode;
+    // syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
     struct FAT32DirectoryTable dirtable;
-    struct FAT32DriverRequest request = {
-        .buf                   = &dirtable,
-        .name                  = "",
-        .ext                   = "\0\0\0",
-        .parent_cluster_number = parentCluster,
-        .buffer_size           = CLUSTER_SIZE
-    };
-    memcpy(request.name, folderName, 8);
-    int32_t retcode;
-    syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
-    if (retcode == 0) {
-        size_t i = 1;
-        if (strcmp(searchName, "root\0\0\0") && parentCluster == 0x2) {
-            i = 0;
-        }
-        for (; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
-            uint32_t clusterAddress = (dirtable.table[i].cluster_high << 16) | dirtable.table[i].cluster_low;
-            if (strcmp(dirtable.table[i].name,searchName)) {
-                *isFound = 1;
-                puts("  root", BIOS_GRAY);
-                constructPath(clusterAddress);
-                if (dirtable.table[i].attribute != ATTR_SUBDIRECTORY && !strcmp(dirtable.table[i].ext, "\0\0\0")) {
+    syscall(7, (uint32_t) &dirtable, folderAddress, 0);
+    for (size_t i = 1; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
+        uint32_t clusterAddress = (dirtable.table[i].cluster_high << 16) | dirtable.table[i].cluster_low;
+        if (strcmp(dirtable.table[i].name,searchName)) {
+            *isFound = 1;
+            puts("  root", BIOS_GRAY);
+            if (dirtable.table[i].attribute != ATTR_SUBDIRECTORY) {
+                constructPath(folderAddress);
+                puts("/", BIOS_GRAY);
+                puts(dirtable.table[i].name, BIOS_GRAY);
+                if (!strcmp(dirtable.table[i].ext, "\0\0\0")) {
                     puts(".", BIOS_GRAY);
                     puts(dirtable.table[i].ext, BIOS_GRAY);
                 }
             }
-            if (dirtable.table[i].attribute == ATTR_SUBDIRECTORY) {
-                DFSsearch(dirtable.table[i].name, clusterAddress, searchName, isFound);
+            else {
+                constructPath(clusterAddress);
             }
-        }  
-    }
+        }
+        if (dirtable.table[i].attribute == ATTR_SUBDIRECTORY) {
+            DFSsearch(clusterAddress, searchName, isFound);
+        }
+    }  
 }
 
 void constructPath(uint32_t clusterAddress) {
