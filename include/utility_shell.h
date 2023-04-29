@@ -11,7 +11,7 @@
 #define BIOS_GRAY 0x07
 #define BIOS_RED 0x0C
 
-extern char* current_directory;
+extern char current_directory[];
 extern uint32_t cwd_cluster_number;
 extern struct FAT32DirectoryTable cwd_table;
 

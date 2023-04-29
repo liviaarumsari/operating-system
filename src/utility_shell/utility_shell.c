@@ -3,7 +3,7 @@
 #include "../../lib/lib-header/string.h"
 #include "../../lib/lib-header/stdmem.h"
 
-char* current_directory = "/";
+char current_directory[9] = "/\0\0\0\0\0\0\0";
 uint32_t cwd_cluster_number = 2;
 struct FAT32DirectoryTable cwd_table;
 
@@ -23,24 +23,32 @@ void puts(char* buf, uint8_t color) {
 
 void cd(char* command) {
     // Get the path
+    int8_t retcode;
     int n_word = wordLen(command, 1);
     char path[n_word+1];
     getWord(command, 1, path);
 
-    puts(path, BIOS_GRAY);
-    puts("\n", BIOS_GRAY);
-
     // If the path is empty, set the current directory to root
     if (strlen(path) == 0) {
-        current_directory = "/";
         cwd_cluster_number = 2;
         return;
     }
 
     // Check if the path is valid
-    struct FAT32DirectoryTable table = cwd_table;
+    struct FAT32DirectoryTable table;
     uint32_t cluster_number = cwd_cluster_number;
     char* token = strtok(path, "/");
+    if (token == NULL) {
+        token = path;
+    }
+
+    struct FAT32DriverRequest request = {
+        .buf = &table,
+        .name = "\0\0\0\0\0\0\0",
+        .ext = "\0\0",
+        .buffer_size = sizeof(struct FAT32DirectoryTable),
+        .parent_cluster_number = cwd_cluster_number
+    };
 
     // Iterate through the path
     while (token != NULL) {
@@ -48,43 +56,32 @@ void cd(char* command) {
         puts("Token: ", BIOS_GRAY);
         puts(token, BIOS_GRAY);
         puts("\n", BIOS_GRAY);
+        addTrailingNull(token, strlen(token), 8);
+        memcpy(request.name, token, 8);
+        request.parent_cluster_number = cluster_number;
 
         // Read the directory table
-        syscall(7, (uint32_t) &table, cluster_number, 0);
-
-        // Iterate through the directory table
-        bool found = 0;
-        for (int32_t i = 1; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
-
-            // If the entry is empty, skip
-            if (table.table[i].name[0] == 0x00)
-                continue;
-
-            // If the entry has the same name as the token and is a folder
-            if (table.table[i].attribute == ATTR_SUBDIRECTORY && strcmp(table.table[i].name, token) != 0) {
-                // Set the cluster number to the entry cluster number
-                cluster_number = table.table[i].cluster_low | (table.table[i].cluster_high << 16);
-                found = 1;
-                break;
-            }
-        }
+        syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
 
         // If the token is not found, put error message and return
-        if (!found) {
+        if (retcode != 0) {
             puts(token, BIOS_RED);
             puts(": No such directory\n", BIOS_GRAY);
             return;
         }
 
+        struct FAT32DirectoryEntry entry;
+        char reqstr[11];
+        memcpy(reqstr, token, 8);
+        memcpy(reqstr + 8, "\0\0\0", 3);
+        syscall(8, (uint32_t)&entry, (uint32_t)reqstr, cluster_number);
+        cluster_number = (entry.cluster_high << 16) | entry.cluster_low;
+
         // Get the next token
         token = strtok(NULL, "/");
     }
 
-    puts(path, BIOS_GRAY);
-    puts("\n", BIOS_GRAY);
-
     // If the path is valid, set the current directory to the path
-    current_directory = path;
     cwd_cluster_number = cluster_number;
 }
 
