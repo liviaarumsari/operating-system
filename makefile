@@ -37,6 +37,8 @@ build: iso
 clean:
 	rm -rf $(OUTPUT_FOLDER)/*.o $(OUTPUT_FOLDER)/*.iso $(OUTPUT_FOLDER)/*.bin $(OUTPUT_FOLDER)/kernel $(OUTPUT_FOLDER)/inserter $(OUTPUT_FOLDER)/shell
 
+reset: clean disk insert-shell
+
 disk:
 	@qemu-img create -f raw $(OUTPUT_FOLDER)/$(DISK_NAME).bin 4M
 

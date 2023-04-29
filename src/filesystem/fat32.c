@@ -102,6 +102,31 @@ int8_t read_directory(struct FAT32DriverRequest request) {
     return -1;
 }
 
+uint32_t custom_read_directory(struct FAT32DriverRequest request) {
+    // Perform linear search to find a directory with request.name
+    struct FAT32DirectoryEntry *entry_p = dir_table_linear_search(request.name, request.ext, request.parent_cluster_number);
+    struct FAT32DirectoryEntry dir_entry = *entry_p;
+
+    // If there is no directory entry found
+    if (entry_p == 0) {
+        return 2;
+    }
+
+    // If the directory entry is not a directory
+    if (dir_entry.attribute != ATTR_SUBDIRECTORY) {
+        return 1;
+    }
+
+    // Get the cluster number of the directory entry
+    uint32_t cluster_number = (dir_entry.cluster_high << 16) | dir_entry.cluster_low;
+
+    if (cluster_number) {
+        return cluster_number;
+    }
+
+    return 3;
+}
+
 int8_t read(struct FAT32DriverRequest request) {
     // Perform linear search to find a directory with request.name
     struct FAT32DirectoryEntry *entry_p = dir_table_linear_search(request.name, request.ext, request.parent_cluster_number);

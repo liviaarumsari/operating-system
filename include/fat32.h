@@ -219,6 +219,12 @@ void read_clusters(void *ptr, uint32_t cluster_number, uint8_t cluster_count);
  */
 int8_t read_directory(struct FAT32DriverRequest request);
 
+/**
+ * Basically the same with read_directory,
+ * but returns the cluster number of the read directory if success
+ * and returns 3 for unknown error.
+ */
+uint32_t custom_read_directory(struct FAT32DriverRequest request);
 
 /**
  * FAT32 read, read a file from file system.
