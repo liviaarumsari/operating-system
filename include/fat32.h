@@ -219,6 +219,12 @@ void read_clusters(void *ptr, uint32_t cluster_number, uint8_t cluster_count);
  */
 int8_t read_directory(struct FAT32DriverRequest request);
 
+/**
+ * Basically the same with read_directory,
+ * but returns the cluster number of the read directory if success
+ * and returns 3 for unknown error.
+ */
+uint32_t custom_read_directory(struct FAT32DriverRequest request);
 
 /**
  * FAT32 read, read a file from file system.
@@ -227,6 +233,15 @@ int8_t read_directory(struct FAT32DriverRequest request);
  * @return Error code: 0 success - 1 not a file - 2 not enough buffer - 3 not found - -1 unknown
  */
 int8_t read(struct FAT32DriverRequest request);
+
+/**
+ * @brief Find the cluster number for a given directory entry
+ * 
+ * @param request The FAT32 driver request containing the directory entry name, extension, and parent cluster number
+ * 
+ * @return The cluster number for the directory entry, or 0 if it cannot be found
+ */
+uint32_t findClusterNumber(struct FAT32DriverRequest request);
 
 /**
  * FAT32 write, write a file or folder to file system.

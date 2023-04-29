@@ -26,4 +26,19 @@ int wordLen(const char* str, uint16_t idx);
 
 void getWord(const char* str, uint16_t idx, char* buf);
 
+/**
+ * Parses a string into a series of tokens based on the
+ * specified delimiter string. It maintains a static pointer to the current
+ * position in the string, allowing subsequent calls to parse additional tokens
+ * from the same string. The delimiter string may contain multiple delimiters,
+ * each of which may be a single character.
+ *
+ * @param str The string to parse.
+ * @param delim The delimiter string.
+ *
+ * @return A pointer to the next token in the string, or NULL if there are no
+ *         more tokens.
+ */
+char* custom_strtok(char* str, const char* delim);
+
 #endif

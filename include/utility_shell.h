@@ -50,6 +50,23 @@ void executeCommand(char* buf);
 void copy(char* src_name, char* src_ext, uint32_t src_parent_number, char* target_name, char* target_ext, uint32_t target_parent_number);
 
 /**
+ * Parses a path into individual parts and stores them
+ * in an array of strings. The parts are separated by forward slashes ('/').
+ * Any consecutive forward slashes in the path are treated as a single delimiter.
+ * The number of parts found is stored in the provided integer pointer.
+ *
+ * @param path The path to parse.
+ * @param parts An array of strings to store the parts in.
+ * @param numParts A pointer to an integer to store the number of parts found.
+ */
+void parsePath(const char* path, char** parts, int* numParts);
+
+/**
+ * Implementation of the `mkdir` command
+*/
+void mkdir(char* dirname);
+
+/**
  * If source has folder but no -r flag: ERROR
  * If target exists:
  *  - target_directory: copy all source into target_directory
