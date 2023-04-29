@@ -21,6 +21,68 @@ void puts(char* buf, uint8_t color) {
     syscall(5, (uint32_t) buf, strlen(buf), color);
 }
 
+void cd(char* command) {
+    // Get the path
+    int n_word = wordLen(command, 1);
+    char path[n_word+1];
+    getWord(command, 1, path);
+
+    // If the path is empty, set the current directory to root
+    if (strlen(path) == 0) {
+        current_directory = "/";
+        cwd_cluster_number = 2;
+        return;
+    }
+
+    // If the path is not empty, check if the path is valid
+    struct FAT32DirectoryTable table;
+    uint32_t cluster_number = cwd_cluster_number;
+    char* token = strtok(path, "/");
+    while (token != ((void*)0)) {
+        // Read the directory table
+        syscall(7, (uint32_t) &table, cluster_number, 0);
+
+        // Iterate through the directory table
+        bool found = 0;
+        for (int32_t i = 1; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
+            // If the entry is empty, skip
+            if (table.table[i].name[0] == 0x00)
+                continue;
+
+            // If the entry is a folder
+            if (table.table[i].attribute == ATTR_SUBDIRECTORY) {
+                // If the entry name is the same as the token
+                if (strncmp(table.table[i].name, token, 11) == 0) {
+                    // Set the cluster number to the entry cluster number
+                    cluster_number = table.table[i].cluster_low;
+                    found = 1;
+                    break;
+                }
+            } else if (strncmp(table.table[i].name, token, 11) == 0) {
+                // If the entry is a file, put error message and return
+                puts(token, BIOS_RED);
+                puts(": Not a directory\n", BIOS_GRAY);
+                found = 1;
+                return;
+            }
+        }
+
+        // If the token is not found, put error message and return
+        if (!found) {
+            puts(token, BIOS_RED);
+            puts(": No such file or directory\n", BIOS_GRAY);
+            return;
+        }
+
+        // Get the next token
+        token = strtok(((void*)0), "/");
+    }
+
+    // If the path is valid, set the current directory to the path
+    current_directory = path;
+    cwd_cluster_number = cluster_number;
+}
+
 void ls() {
     syscall(7, (uint32_t) &cwd_table, cwd_cluster_number, 0);
     
@@ -368,10 +430,9 @@ void executeCommand(char* buf) {
     getWord(buf, 0, command);
 
     if (strcmp(command, "cd")) {
-        // panggil fungsi
+        cd(buf);
     }
     else if (strcmp(command, "ls")) {
-        // panggil fungsi
         ls();
     }
     else if (strcmp(command, "mkdir")) {
