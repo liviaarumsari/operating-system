@@ -123,5 +123,12 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
     } else if (cpu.eax == 7) {
         struct FAT32DirectoryTable *dirtable = (struct FAT32DirectoryTable*)cpu.ebx;
         read_clusters(dirtable, cpu.ecx, 1);
+    } else if (cpu.eax == 8) {
+        // CPU.EBX: pointer to directory entry
+        // CPU.ECX: 11 char array with first 8 chars being filename & last three being ext
+        // CPU.EDX: parent cluster number
+        char *name = (char *)cpu.ecx;
+        char *ext = (char *)cpu.ecx + 8;
+        *((struct FAT32DirectoryEntry*)cpu.ebx) = *(dir_table_linear_search(name, ext, cpu.edx));
     }
 }
