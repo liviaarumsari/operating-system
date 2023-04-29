@@ -63,8 +63,17 @@ void cd(char* command) {
     char path[n_word+1];
     getWord(command, 1, path);
 
-    // If the path is empty, set the current directory to root
     if (strlen(path) == 0) {
+        return;
+    }
+
+    if (strcmp(path, "..")) {
+        cwd_cluster_number = (cwd_table.table[0].cluster_high << 16) | cwd_table.table[0].cluster_low;
+        return;
+    }
+
+    // If the path is empty, set the current directory to root
+    if (strcmp(path, "..")) {
         cwd_cluster_number = 2;
         return;
     }
@@ -72,10 +81,17 @@ void cd(char* command) {
     // Check if the path is valid
     struct FAT32DirectoryTable table;
     uint32_t cluster_number = cwd_cluster_number;
-    char* token = strtok(path, "/");
-    if (token == NULL) {
-        token = path;
+
+    // start search from root if abspath
+    bool abspath = 0;
+    if (path[0] == '/') {
+        cluster_number = 2;
+        abspath = 1;
     }
+
+    char* token = strtok(path, "/");
+    if (abspath)
+        token = strtok(NULL, "/");
 
     struct FAT32DriverRequest request = {
         .buf = &table,
@@ -88,9 +104,6 @@ void cd(char* command) {
     // Iterate through the path
     while (token != NULL) {
         // For debug: check token
-        puts("Token: ", BIOS_GRAY);
-        puts(token, BIOS_GRAY);
-        puts("\n", BIOS_GRAY);
         addTrailingNull(token, strlen(token), 8);
         memcpy(request.name, token, 8);
         request.parent_cluster_number = cluster_number;
@@ -248,11 +261,25 @@ void cp(char* command) {
     else
         target_idx = n_words - 1;
 
+    uint16_t target_n = wordLen(command, target_idx);
+    char target_filename[target_n + 1];
+    getWord(command, target_idx, target_filename);
+
+    if (cwd_cluster_number == 2 && strcmp(target_filename, "..")) {
+        puts("root folder does not have parent\n", BIOS_GRAY);
+        return;
+    }
+
     // check if all source exists
     for (uint16_t i = 1; i < n_words; i++) {
         if (recursive == i || target_idx == i) continue;
         char filename[12];
         getWord(command, i, filename);
+
+        if (strcmp(filename, "..")) {
+            puts("cannot copy a directory, '..', into itself\n", BIOS_GRAY);
+            return;
+        }
 
         char name[9];
         char ext[4];
@@ -277,33 +304,43 @@ void cp(char* command) {
             puts(": is a directory;  -r not specified\n", BIOS_GRAY);
             return;
         }
+        if (retcode == 0 && strcmp(target_filename, "..") && memcmp(name, cwd_table.table[0].name, 8) == 0) {
+            puts(filename, BIOS_GRAY);
+            puts(": cannot copy into itself\n", BIOS_GRAY);
+            return;
+        } 
     }
-
-    uint16_t target_n = wordLen(command, target_idx);
-    char target_filename[target_n + 1];
-    getWord(command, target_idx, target_filename);
 
     char target_name[9];
     char target_ext[4];
 
-    if (parseFileName(target_filename, target_name, target_ext)) {
-        puts(target_filename, BIOS_GRAY);
-        puts(": filename invalid, name or extension may be too long\n", BIOS_GRAY);
-        return;
+    if (strcmp(target_filename, "..")) {
+        retcode = 0;
+    } else {
+        if (parseFileName(target_filename, target_name, target_ext)) {
+            puts(target_filename, BIOS_GRAY);
+            puts(": filename invalid, name or extension may be too long\n", BIOS_GRAY);
+            return;
+        }
+
+        memcpy(request.name, target_name, 8);
+        memcpy(request.ext, target_ext, 3);
+        syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
     }
 
-    memcpy(request.name, target_name, 8);
-    memcpy(request.ext, target_ext, 3);
-    syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
-    
     // target is an existing directory
     if (retcode == 0) {
         uint32_t target_cluster_number;
-        for (int32_t i = 0; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
-            if (memcmp(cwd_table.table[i].name, target_name, 8) == 0 &&
-                memcmp(cwd_table.table[i].ext, target_ext, 3) == 0) {
-                target_cluster_number = (cwd_table.table[i].cluster_high << 16) | cwd_table.table[i].cluster_low;
+
+        if (!strcmp(target_filename, "..")) {
+            for (int32_t i = 0; i < (int32_t)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
+                if (memcmp(cwd_table.table[i].name, target_name, 8) == 0 &&
+                    memcmp(cwd_table.table[i].ext, target_ext, 3) == 0) {
+                    target_cluster_number = (cwd_table.table[i].cluster_high << 16) | cwd_table.table[i].cluster_low;
+                }
             }
+        } else {
+            target_cluster_number = (cwd_table.table[0].cluster_high << 16) | cwd_table.table[0].cluster_low;
         }
 
         for (int16_t i = 1; i < n_words; i++) {

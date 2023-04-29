@@ -62,9 +62,39 @@ void kernel_setup(void) {
         .ext                   = "\0\0\0",
         .parent_cluster_number = ROOT_CLUSTER_NUMBER,
         .buffer_size           = CLUSTER_SIZE,
-    } ;
+    };
 
     write(request_file2);
+
+    struct FAT32DriverRequest request_file3 = {
+        .buf                   = &single_clustera,
+        .name                  = "file3\0\0\0",
+        .ext                   = "\0\0\0",
+        .parent_cluster_number = 3,
+        .buffer_size           = CLUSTER_SIZE,
+    };
+
+    write(request_file3);
+
+    struct FAT32DriverRequest request_folder2 = {
+        .buf                   = &single_clustera,
+        .name                  = "folder2\0",
+        .ext                   = "\0\0\0",
+        .parent_cluster_number = 3,
+        .buffer_size           = 0,
+    };
+
+    write(request_folder2);
+
+    struct FAT32DriverRequest request_file4 = {
+        .buf                   = &single_clustera,
+        .name                  = "file4\0\0\0",
+        .ext                   = "\0\0\0",
+        .parent_cluster_number = 7,
+        .buffer_size           = CLUSTER_SIZE,
+    };
+
+    write(request_file4);
 
     while (TRUE);
 }
