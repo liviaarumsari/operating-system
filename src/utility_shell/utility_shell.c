@@ -63,8 +63,17 @@ void cd(char* command) {
     char path[n_word+1];
     getWord(command, 1, path);
 
-    // If the path is empty, set the current directory to root
     if (strlen(path) == 0) {
+        return;
+    }
+
+    if (strcmp(path, "..")) {
+        cwd_cluster_number = (cwd_table.table[0].cluster_high << 16) | cwd_table.table[0].cluster_low;
+        return;
+    }
+
+    // If the path is empty, set the current directory to root
+    if (strcmp(path, "..")) {
         cwd_cluster_number = 2;
         return;
     }
@@ -72,10 +81,17 @@ void cd(char* command) {
     // Check if the path is valid
     struct FAT32DirectoryTable table;
     uint32_t cluster_number = cwd_cluster_number;
-    char* token = strtok(path, "/");
-    if (token == NULL) {
-        token = path;
+
+    // start search from root if abspath
+    bool abspath = 0;
+    if (path[0] == '/') {
+        cluster_number = 2;
+        abspath = 1;
     }
+
+    char* token = strtok(path, "/");
+    if (abspath)
+        token = strtok(NULL, "/");
 
     struct FAT32DriverRequest request = {
         .buf = &table,
@@ -88,9 +104,6 @@ void cd(char* command) {
     // Iterate through the path
     while (token != NULL) {
         // For debug: check token
-        puts("Token: ", BIOS_GRAY);
-        puts(token, BIOS_GRAY);
-        puts("\n", BIOS_GRAY);
         addTrailingNull(token, strlen(token), 8);
         memcpy(request.name, token, 8);
         request.parent_cluster_number = cluster_number;
