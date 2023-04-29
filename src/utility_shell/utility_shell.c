@@ -89,10 +89,9 @@ void copy(char* src_name, char* src_ext, uint32_t src_parent_number, char* targe
         memcpy(request.ext, target_ext, 3);
         request.parent_cluster_number = target_parent_number;
         syscall(2, (uint32_t)&request, (uint32_t)&retcode, 0);
+        if (retcode != 0)
+            puts("Error writing to file", BIOS_GRAY);
     }
-
-    if (retcode != 0)
-        puts("Error writing to file", BIOS_GRAY);
 }
 
 void cp(char* command) {
@@ -152,7 +151,7 @@ void cp(char* command) {
             puts(": file not found\n", BIOS_GRAY);
             return;
         }
-        if (retcode == 0 && recursive != -1) {
+        if (retcode == 0 && recursive == -1) {
             puts(filename, BIOS_GRAY);
             puts(": is a directory;  -r not specified\n", BIOS_GRAY);
             return;
