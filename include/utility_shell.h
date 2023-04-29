@@ -18,7 +18,7 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
 
 void puts(char* buf, uint8_t color);
 
-void copy(char* src_name, char* src_ext, uint32_t src_cluster_number, char* target_name, char* target_ext, uint32_t target_cluster_number);
+void copy(char* src_name, char* src_ext, uint32_t src_parent_number, char* target_name, char* target_ext, uint32_t target_parent_number);
 
 /**
  * If source has folder but no -r flag: ERROR
@@ -34,6 +34,10 @@ void copy(char* src_name, char* src_ext, uint32_t src_cluster_number, char* targ
  *      - If source_file: create new file
 */
 void cp(char* command);
+
+void remove(char* name, char* ext, uint32_t parent_number);
+
+void rm(char* command);
 
 void executeCommand(char* buf);
 
